@@ -368,11 +368,98 @@ class NotificationService {
     return await _notifications.pendingNotificationRequests();
   }
 
+  // Schedule notifications for daily schedule tasks
+  static Future<void> scheduleDailyScheduleReminders() async {
+    final schedule = HouseService.getTodaySchedule();
+    final now = tz.TZDateTime.now(tz.local);
+    
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'schedule_reminders',
+      'Schedule Reminders',
+      channelDescription: 'Reminders for daily schedule tasks',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    // Cancel old schedule reminders (ids 100-199)
+    for (int i = 100; i < 200; i++) {
+      await cancelNotification(i);
+    }
+
+    // Schedule notification for each task
+    for (int i = 0; i < schedule.length; i++) {
+      final task = schedule[i];
+      final timeStr = task['time'] ?? '';
+      
+      // Parse time like "7:00 AM" or "10:00 PM"
+      try {
+        final timePattern = RegExp(r'(\d+):(\d+)\s*(AM|PM)', caseSensitive: false);
+        final match = timePattern.firstMatch(timeStr);
+        
+        if (match != null) {
+          int hour = int.parse(match.group(1)!);
+          final minute = int.parse(match.group(2)!);
+          final period = match.group(3)!.toUpperCase();
+          
+          // Convert to 24-hour format
+          if (period == 'PM' && hour != 12) {
+            hour += 12;
+          } else if (period == 'AM' && hour == 12) {
+            hour = 0;
+          }
+          
+          // Schedule for today or tomorrow
+          var scheduledDate = tz.TZDateTime(
+            tz.local,
+            now.year,
+            now.month,
+            now.day,
+            hour,
+            minute,
+          );
+          
+          // If time has passed today, schedule for tomorrow
+          if (scheduledDate.isBefore(now)) {
+            scheduledDate = scheduledDate.add(const Duration(days: 1));
+          }
+          
+          await _notifications.zonedSchedule(
+            100 + i, // notification id (100-199 range for schedule)
+            '⏰ ${task['task']}',
+            task['details'] ?? 'Time to complete this task!',
+            scheduledDate,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
+          );
+        }
+      } catch (e) {
+        print('Error parsing time for task ${task['task']}: $e');
+      }
+    }
+  }
+
   // Setup all notifications based on settings
   static Future<void> setupNotifications() async {
     final prefs = await SharedPreferences.getInstance();
     final notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     final dailyReminders = prefs.getBool('daily_reminders') ?? true;
+    final scheduleReminders = prefs.getBool('schedule_reminders') ?? false;
     
     if (!notificationsEnabled) {
       await cancelAllNotifications();
@@ -386,6 +473,10 @@ class NotificationService {
       await scheduleDailyZoneReminder(hour, minute);
       await scheduleDeclutterReminder();
       await scheduleStreakReminder();
+    }
+    
+    if (scheduleReminders) {
+      await scheduleDailyScheduleReminders();
     }
   }
 }

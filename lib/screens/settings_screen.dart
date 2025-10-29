@@ -21,6 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _notificationsEnabled = false;
   bool _dailyReminders = true;
+  bool _scheduleReminders = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
 
   @override
@@ -39,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
       _dailyReminders = prefs.getBool('daily_reminders') ?? true;
+      _scheduleReminders = prefs.getBool('schedule_reminders') ?? false;
       
       final hour = prefs.getInt('reminder_hour') ?? 9;
       final minute = prefs.getInt('reminder_minute') ?? 0;
@@ -102,6 +104,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     // Update notifications
     await NotificationService.setupNotifications();
+  }
+
+  Future<void> _saveScheduleReminders(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('schedule_reminders', enabled);
+    setState(() {
+      _scheduleReminders = enabled;
+    });
+    
+    // Update notifications
+    await NotificationService.setupNotifications();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(enabled 
+            ? 'Schedule reminders enabled! You\'ll be notified at each task time.' 
+            : 'Schedule reminders disabled'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _saveReminderTime(TimeOfDay time) async {
@@ -170,6 +194,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: const Text('Get reminded of today\'s zone'),
                   value: _dailyReminders,
                   onChanged: _notificationsEnabled ? _saveDailyReminders : null,
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  secondary: const Icon(Icons.event_note),
+                  title: const Text('Schedule Reminders'),
+                  subtitle: const Text('Get notified for each daily task'),
+                  value: _scheduleReminders,
+                  onChanged: _notificationsEnabled ? _saveScheduleReminders : null,
                 ),
                 const Divider(height: 1),
                 ListTile(

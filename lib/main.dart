@@ -115,12 +115,18 @@ class _MainNavigationState extends State<MainNavigation> {
   void initState() {
     super.initState();
     _screens = [
-      const DashboardScreen(),
+      DashboardScreen(onNavigate: _navigateToTab),
       const ZoneScreen(),
       const ScheduleScreen(),
       const DeclutterScreen(),
       const StatisticsScreen(),
     ];
+  }
+
+  void _navigateToTab(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override

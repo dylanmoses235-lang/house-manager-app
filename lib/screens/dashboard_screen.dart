@@ -6,7 +6,9 @@ import 'shopping_list_screen.dart';
 import 'calendar_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Function(int) onNavigate;
+  
+  const DashboardScreen({super.key, required this.onNavigate});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -178,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              DefaultTabController.of(context)?.animateTo(3);
+                              widget.onNavigate(3); // Navigate to Declutter tab
                             },
                             child: const Text('View All →'),
                           ),
@@ -210,9 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.cleaning_services,
                       Colors.blue,
                       () {
-                        setState(() {
-                          DefaultTabController.of(context)?.animateTo(1);
-                        });
+                        widget.onNavigate(1); // Navigate to Zone tab
                       },
                     ),
                   ),
@@ -225,9 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.schedule,
                       Colors.orange,
                       () {
-                        setState(() {
-                          DefaultTabController.of(context)?.animateTo(2);
-                        });
+                        widget.onNavigate(2); // Navigate to Schedule tab
                       },
                     ),
                   ),
@@ -262,9 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.analytics,
                       Colors.purple,
                       () {
-                        setState(() {
-                          DefaultTabController.of(context)?.animateTo(4);
-                        });
+                        widget.onNavigate(4); // Navigate to Statistics tab
                       },
                     ),
                   ),
