@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/zone_task.dart';
 import '../models/schedule_task.dart';
 import '../models/declutter_day.dart';
+import '../models/supply_item.dart';
 import '../data/cleaning_data.dart';
 
 class HouseService {
@@ -10,6 +11,9 @@ class HouseService {
   static const String scheduleTasksBox = 'schedule_tasks';
   static const String declutterBox = 'declutter';
   static const String settingsBox = 'settings';
+  static const String dailyTaskCompletionBox = 'daily_task_completion';
+  static const String statisticsBox = 'statistics';
+  static const String suppliesBox = 'supplies';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -18,12 +22,16 @@ class HouseService {
     Hive.registerAdapter(ZoneTaskAdapter());
     Hive.registerAdapter(ScheduleTaskAdapter());
     Hive.registerAdapter(DeclutterDayAdapter());
+    Hive.registerAdapter(SupplyItemAdapter());
 
     // Open boxes
     await Hive.openBox<ZoneTask>(zoneTasksBox);
     await Hive.openBox<ScheduleTask>(scheduleTasksBox);
     await Hive.openBox<DeclutterDay>(declutterBox);
+    await Hive.openBox<SupplyItem>(suppliesBox);
     await Hive.openBox(settingsBox);
+    await Hive.openBox(dailyTaskCompletionBox);
+    await Hive.openBox(statisticsBox);
 
     // Initialize data if first time
     await _initializeData();
@@ -139,5 +147,168 @@ class HouseService {
     
     // Reset start date
     settings.put('challengeStartDate', DateTime.now().toIso8601String());
+  }
+
+  // Zone task completion persistence
+  static String _getZoneTaskKey(String zone, int taskIndex, DateTime date) {
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    return '${zone}_${taskIndex}_$dateStr';
+  }
+
+  static Future<void> setZoneTaskCompletion(String zone, int taskIndex, bool isCompleted) async {
+    final box = Hive.box(dailyTaskCompletionBox);
+    final key = _getZoneTaskKey(zone, taskIndex, DateTime.now());
+    await box.put(key, isCompleted);
+    
+    // Update statistics
+    if (isCompleted) {
+      await _recordTaskCompletion('zone', zone);
+    }
+  }
+
+  static bool getZoneTaskCompletion(String zone, int taskIndex) {
+    final box = Hive.box(dailyTaskCompletionBox);
+    final key = _getZoneTaskKey(zone, taskIndex, DateTime.now());
+    return box.get(key, defaultValue: false);
+  }
+
+  static Map<String, bool> getAllZoneTaskCompletions(String zone) {
+    final tasks = getZoneTasks(zone);
+    final completions = <String, bool>{};
+    for (int i = 0; i < tasks.length; i++) {
+      completions['$i'] = getZoneTaskCompletion(zone, i);
+    }
+    return completions;
+  }
+
+  // Schedule task completion persistence
+  static String _getScheduleTaskKey(int taskIndex, DateTime date) {
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+    return 'schedule_${isWeekend ? 'weekend' : 'weekday'}_${taskIndex}_$dateStr';
+  }
+
+  static Future<void> setScheduleTaskCompletion(int taskIndex, bool isCompleted) async {
+    final box = Hive.box(dailyTaskCompletionBox);
+    final key = _getScheduleTaskKey(taskIndex, DateTime.now());
+    await box.put(key, isCompleted);
+    
+    // Update statistics
+    if (isCompleted) {
+      await _recordTaskCompletion('schedule', 'daily');
+    }
+  }
+
+  static bool getScheduleTaskCompletion(int taskIndex) {
+    final box = Hive.box(dailyTaskCompletionBox);
+    final key = _getScheduleTaskKey(taskIndex, DateTime.now());
+    return box.get(key, defaultValue: false);
+  }
+
+  static Map<String, bool> getAllScheduleTaskCompletions() {
+    final schedule = getTodaySchedule();
+    final completions = <String, bool>{};
+    for (int i = 0; i < schedule.length; i++) {
+      completions['$i'] = getScheduleTaskCompletion(i);
+    }
+    return completions;
+  }
+
+  // Statistics tracking
+  static Future<void> _recordTaskCompletion(String type, String category) async {
+    final box = Hive.box(statisticsBox);
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final key = '${type}_${category}_$today';
+    
+    int count = box.get(key, defaultValue: 0);
+    await box.put(key, count + 1);
+    
+    // Record for streak calculation
+    await box.put('last_active_date', today);
+  }
+
+  // Get statistics
+  static int getTasksCompletedToday() {
+    final box = Hive.box(statisticsBox);
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    int total = 0;
+    
+    for (var key in box.keys) {
+      if (key.toString().endsWith(today)) {
+        total += box.get(key, defaultValue: 0) as int;
+      }
+    }
+    return total;
+  }
+
+  static int getCurrentStreak() {
+    final box = Hive.box(statisticsBox);
+    final lastActiveStr = box.get('last_active_date');
+    
+    if (lastActiveStr == null) return 0;
+    
+    final lastActive = DateTime.parse(lastActiveStr);
+    final today = DateTime.now();
+    final difference = today.difference(lastActive).inDays;
+    
+    if (difference > 1) return 0; // Streak broken
+    if (difference == 1) {
+      return box.get('current_streak', defaultValue: 1);
+    }
+    
+    return box.get('current_streak', defaultValue: 0);
+  }
+
+  static int getTotalTasksCompleted() {
+    final box = Hive.box(statisticsBox);
+    int total = 0;
+    
+    for (var key in box.keys) {
+      if (key.toString().contains('zone_') || key.toString().contains('schedule_')) {
+        final value = box.get(key);
+        if (value is int) {
+          total += value;
+        }
+      }
+    }
+    return total;
+  }
+
+  static Map<String, int> getTaskCompletionByZone() {
+    final box = Hive.box(statisticsBox);
+    final zoneCounts = <String, int>{};
+    
+    for (var key in box.keys) {
+      if (key.toString().startsWith('zone_')) {
+        final parts = key.toString().split('_');
+        if (parts.length >= 2) {
+          final zone = parts[1];
+          zoneCounts[zone] = (zoneCounts[zone] ?? 0) + (box.get(key, defaultValue: 0) as int);
+        }
+      }
+    }
+    return zoneCounts;
+  }
+
+  // Clean up old completion data (keep last 30 days)
+  static Future<void> cleanupOldCompletions() async {
+    final box = Hive.box(dailyTaskCompletionBox);
+    final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
+    final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoffDate);
+    
+    final keysToDelete = <String>[];
+    for (var key in box.keys) {
+      if (key.toString().contains('_')) {
+        final parts = key.toString().split('_');
+        final dateStr = parts.last;
+        if (dateStr.compareTo(cutoffStr) < 0) {
+          keysToDelete.add(key as String);
+        }
+      }
+    }
+    
+    for (var key in keysToDelete) {
+      await box.delete(key);
+    }
   }
 }

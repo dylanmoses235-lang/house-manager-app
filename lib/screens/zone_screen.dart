@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/house_service.dart';
+import 'timer_screen.dart';
 
 class ZoneScreen extends StatefulWidget {
   const ZoneScreen({super.key});
@@ -24,8 +25,8 @@ class _ZoneScreenState extends State<ZoneScreen> {
     final zoneTasks = HouseService.getZoneTasks(selectedZone);
     tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
     
-    // Initialize completion state
-    taskCompletion = {for (int i = 0; i < tasks.length; i++) '$i': false};
+    // Load completion state from persistence
+    taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
   }
 
   void _changeZone(String zone) {
@@ -153,9 +154,15 @@ class _ZoneScreenState extends State<ZoneScreen> {
                           child: ExpansionTile(
                             leading: Checkbox(
                               value: isCompleted,
-                              onChanged: (value) {
+                              onChanged: (value) async {
+                                final newValue = value ?? false;
+                                await HouseService.setZoneTaskCompletion(
+                                  selectedZone, 
+                                  index, 
+                                  newValue,
+                                );
                                 setState(() {
-                                  taskCompletion['$index'] = value ?? false;
+                                  taskCompletion['$index'] = newValue;
                                 });
                               },
                             ),
@@ -167,6 +174,20 @@ class _ZoneScreenState extends State<ZoneScreen> {
                                     ? TextDecoration.lineThrough
                                     : null,
                               ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.timer_outlined),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TimerScreen(
+                                      taskName: task['task'] ?? '',
+                                      zone: selectedZone,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             children: [
                               Padding(

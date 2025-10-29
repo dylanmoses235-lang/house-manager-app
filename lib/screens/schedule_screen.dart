@@ -20,7 +20,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   void _loadSchedule() {
     schedule = HouseService.getTodaySchedule();
-    taskCompletion = {for (int i = 0; i < schedule.length; i++) '$i': false};
+    taskCompletion = HouseService.getAllScheduleTaskCompletions();
   }
 
   @override
@@ -120,9 +120,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                     trailing: Checkbox(
                       value: isCompleted,
-                      onChanged: (value) {
+                      onChanged: (value) async {
+                        final newValue = value ?? false;
+                        await HouseService.setScheduleTaskCompletion(index, newValue);
                         setState(() {
-                          taskCompletion['$index'] = value ?? false;
+                          taskCompletion['$index'] = newValue;
                         });
                       },
                     ),

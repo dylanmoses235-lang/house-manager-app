@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../services/house_service.dart';
+import 'shopping_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -214,6 +215,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       () {
                         setState(() {
                           DefaultTabController.of(context)?.animateTo(2);
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildActionCard(
+                      context,
+                      'Shopping List',
+                      'Manage supplies',
+                      Icons.shopping_cart,
+                      Colors.green,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ShoppingListScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionCard(
+                      context,
+                      'Statistics',
+                      'View your progress',
+                      Icons.analytics,
+                      Colors.purple,
+                      () {
+                        setState(() {
+                          DefaultTabController.of(context)?.animateTo(4);
                         });
                       },
                     ),

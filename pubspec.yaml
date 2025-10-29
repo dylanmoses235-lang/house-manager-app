@@ -47,6 +47,25 @@ dependencies:
   
   # Progress indicators
   percent_indicator: 4.2.3
+  
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+  
+  # Charts for statistics
+  fl_chart: ^0.69.2
+  
+  # Image picker for photos
+  image_picker: ^1.1.2
+  
+  # Path provider for file storage
+  path_provider: ^2.1.5
+  
+  # Shared preferences for settings
+  shared_preferences: ^2.3.3
+  
+  # UUID for unique IDs
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
