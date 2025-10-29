@@ -71,13 +71,32 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
         setState(() {
           _selectedPhotos.add(savedImage.path);
         });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Photo added successfully!'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
         );
       }
+      print('Error picking image: $e');
     }
   }
 
