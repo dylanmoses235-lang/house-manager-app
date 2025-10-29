@@ -53,6 +53,19 @@ class _ZoneScreenState extends State<ZoneScreen> {
     });
   }
 
+  bool _isCustomZone(String zone) {
+    final defaultZones = [
+      'Kitchen',
+      'Bathroom',
+      'Bedroom',
+      'Living Room',
+      'Laundry Room',
+      'Office',
+      'Reset',
+    ];
+    return !defaultZones.contains(zone);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -71,7 +84,10 @@ class _ZoneScreenState extends State<ZoneScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_task),
-            onPressed: _showAddTaskDialog,
+            onPressed: () {
+              print('Add Task button clicked for zone: $selectedZone'); // Debug
+              _showAddTaskDialog();
+            },
             tooltip: 'Add Task',
           ),
           PopupMenuButton<String>(
@@ -155,6 +171,16 @@ class _ZoneScreenState extends State<ZoneScreen> {
                             color: Theme.of(context).colorScheme.outline,
                           ),
                         ),
+                        if (_isCustomZone(selectedZone)) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap the ➕ button above to add tasks',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   )
@@ -198,6 +224,12 @@ class _ZoneScreenState extends State<ZoneScreen> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                if (_isCustomZone(selectedZone))
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined),
+                                    onPressed: () => _showEditTaskDialog(index),
+                                    tooltip: 'Edit Task',
+                                  ),
                                 IconButton(
                                   icon: const Icon(Icons.note_outlined),
                                   onPressed: () async {
@@ -348,6 +380,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
                   border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.sentences,
+                autofocus: true,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -370,12 +403,19 @@ class _ZoneScreenState extends State<ZoneScreen> {
           ),
           FilledButton(
             onPressed: () async {
-              if (taskController.text.isNotEmpty) {
+              if (taskController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a task name')),
+                );
+                return;
+              }
+
+              try {
                 final newTask = {
-                  'task': taskController.text,
-                  'howTo': howToController.text.isEmpty 
+                  'task': taskController.text.trim(),
+                  'howTo': howToController.text.trim().isEmpty 
                       ? 'No instructions provided' 
-                      : howToController.text,
+                      : howToController.text.trim(),
                 };
                 
                 // Add to current tasks list
@@ -388,6 +428,9 @@ class _ZoneScreenState extends State<ZoneScreen> {
                 );
                 
                 // Reload tasks
+                setState(() {
+                  _isLoading = true;
+                });
                 await _loadTasks();
                 setState(() {
                   _isLoading = false;
@@ -396,12 +439,130 @@ class _ZoneScreenState extends State<ZoneScreen> {
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Task added successfully')),
+                    SnackBar(content: Text('Task added to $selectedZone!')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error adding task: $e')),
                   );
                 }
               }
             },
             child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditTaskDialog(int index) {
+    final task = tasks[index];
+    final taskController = TextEditingController(text: task['task']);
+    final howToController = TextEditingController(text: task['howTo']);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Task'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: taskController,
+                decoration: const InputDecoration(
+                  labelText: 'Task Name',
+                  border: OutlineInputBorder(),
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: howToController,
+                decoration: const InputDecoration(
+                  labelText: 'How to do it',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Delete task
+              final updatedTasks = List<Map<String, dynamic>>.from(tasks);
+              updatedTasks.removeAt(index);
+              
+              await HouseService.saveZoneTasks(
+                selectedZone,
+                updatedTasks.map((t) => Map<String, String>.from(t)).toList(),
+              );
+              
+              setState(() {
+                _isLoading = true;
+              });
+              await _loadTasks();
+              setState(() {
+                _isLoading = false;
+              });
+              
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Task deleted')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (taskController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a task name')),
+                );
+                return;
+              }
+
+              final updatedTasks = List<Map<String, dynamic>>.from(tasks);
+              updatedTasks[index] = {
+                'task': taskController.text.trim(),
+                'howTo': howToController.text.trim().isEmpty 
+                    ? 'No instructions provided' 
+                    : howToController.text.trim(),
+              };
+              
+              await HouseService.saveZoneTasks(
+                selectedZone,
+                updatedTasks.map((t) => Map<String, String>.from(t)).toList(),
+              );
+              
+              setState(() {
+                _isLoading = true;
+              });
+              await _loadTasks();
+              setState(() {
+                _isLoading = false;
+              });
+              
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Task updated!')),
+                );
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

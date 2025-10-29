@@ -123,18 +123,26 @@ class HouseService {
     // First check if there are custom tasks stored for this zone
     final prefs = await SharedPreferences.getInstance();
     final customTasksJson = prefs.getString('zone_tasks_$zone');
+    print('Loading tasks for $zone: $customTasksJson'); // Debug log
     if (customTasksJson != null) {
       final List<dynamic> decoded = json.decode(customTasksJson);
-      return decoded.map((task) => Map<String, String>.from(task)).toList();
+      final tasks = decoded.map((task) => Map<String, String>.from(task)).toList();
+      print('Loaded ${tasks.length} custom tasks for $zone'); // Debug log
+      return tasks;
     }
     // Otherwise return default tasks
-    return CleaningData.zoneTasks[zone] ?? [];
+    final defaultTasks = CleaningData.zoneTasks[zone] ?? [];
+    print('Loaded ${defaultTasks.length} default tasks for $zone'); // Debug log
+    return defaultTasks;
   }
 
   // Save custom tasks for a zone
   static Future<void> saveZoneTasks(String zone, List<Map<String, String>> tasks) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('zone_tasks_$zone', json.encode(tasks));
+    final key = 'zone_tasks_$zone';
+    final jsonString = json.encode(tasks);
+    await prefs.setString(key, jsonString);
+    print('Saved tasks for $zone: $jsonString'); // Debug log
   }
 
   // Get today's schedule
