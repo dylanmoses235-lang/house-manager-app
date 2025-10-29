@@ -4,6 +4,7 @@ import '../models/zone_task.dart';
 import '../models/schedule_task.dart';
 import '../models/declutter_day.dart';
 import '../models/supply_item.dart';
+import '../models/task_note.dart';
 import '../data/cleaning_data.dart';
 
 class HouseService {
@@ -14,6 +15,7 @@ class HouseService {
   static const String dailyTaskCompletionBox = 'daily_task_completion';
   static const String statisticsBox = 'statistics';
   static const String suppliesBox = 'supplies';
+  static const String taskNotesBox = 'task_notes';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -23,12 +25,14 @@ class HouseService {
     Hive.registerAdapter(ScheduleTaskAdapter());
     Hive.registerAdapter(DeclutterDayAdapter());
     Hive.registerAdapter(SupplyItemAdapter());
+    Hive.registerAdapter(TaskNoteAdapter());
 
     // Open boxes
     await Hive.openBox<ZoneTask>(zoneTasksBox);
     await Hive.openBox<ScheduleTask>(scheduleTasksBox);
     await Hive.openBox<DeclutterDay>(declutterBox);
     await Hive.openBox<SupplyItem>(suppliesBox);
+    await Hive.openBox<TaskNote>(taskNotesBox);
     await Hive.openBox(settingsBox);
     await Hive.openBox(dailyTaskCompletionBox);
     await Hive.openBox(statisticsBox);

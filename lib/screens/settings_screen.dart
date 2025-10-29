@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/house_service.dart';
+import '../services/notification_service.dart';
+import '../services/export_service.dart';
+import 'manage_zones_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(ThemeMode) onThemeChanged;
@@ -53,11 +56,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _saveNotificationSettings(bool enabled) async {
+    if (enabled) {
+      // Request permissions first
+      final granted = await NotificationService.requestPermissions();
+      if (!granted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Notification permissions denied'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+    }
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', enabled);
     setState(() {
       _notificationsEnabled = enabled;
     });
+    
+    // Setup or cancel notifications based on setting
+    await NotificationService.setupNotifications();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(enabled 
+            ? 'Notifications enabled!' 
+            : 'Notifications disabled'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _saveDailyReminders(bool enabled) async {
@@ -66,6 +99,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _dailyReminders = enabled;
     });
+    
+    // Update notifications
+    await NotificationService.setupNotifications();
   }
 
   Future<void> _saveReminderTime(TimeOfDay time) async {
@@ -75,6 +111,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _reminderTime = time;
     });
+    
+    // Reschedule notifications with new time
+    await NotificationService.setupNotifications();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reminder time updated to ${time.format(context)}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -138,6 +186,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
+          // Customization Section
+          _buildSectionHeader('🎨 Customization'),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.home_work_outlined),
+                  title: const Text('Manage Zones'),
+                  subtitle: const Text('Customize zones and weekly schedule'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ManageZonesScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
           // Data Management Section
           _buildSectionHeader('💾 Data Management'),
           Card(
@@ -150,6 +222,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: const Text('Remove completion data older than 30 days'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _cleanOldData(context),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.backup),
+                  title: const Text('Export Backup'),
+                  subtitle: const Text('Save all your data to a file'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _exportBackup(context),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.table_chart),
+                  title: const Text('Export Statistics'),
+                  subtitle: const Text('Export stats as CSV file'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _exportStatistics(context),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -309,6 +397,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _exportBackup(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await ExportService.shareBackup();
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup exported successfully!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting backup: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportStatistics(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await ExportService.shareStatisticsCSV();
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Statistics exported successfully!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting statistics: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _confirmResetAll(BuildContext context) async {

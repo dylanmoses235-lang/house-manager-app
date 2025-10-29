@@ -66,6 +66,12 @@ dependencies:
   
   # UUID for unique IDs
   uuid: ^4.5.1
+  
+  # Calendar
+  table_calendar: ^3.1.2
+  
+  # Sharing and file operations
+  share_plus: ^10.1.2
 
 dev_dependencies:
   flutter_test:

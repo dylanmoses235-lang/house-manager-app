@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/house_service.dart';
+import '../services/notification_service.dart';
 import 'timer_screen.dart';
+import 'task_notes_screen.dart';
 
 class ZoneScreen extends StatefulWidget {
   const ZoneScreen({super.key});
@@ -175,19 +178,41 @@ class _ZoneScreenState extends State<ZoneScreen> {
                                     : null,
                               ),
                             ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.timer_outlined),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TimerScreen(
-                                      taskName: task['task'] ?? '',
-                                      zone: selectedZone,
-                                    ),
-                                  ),
-                                );
-                              },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.note_outlined),
+                                  onPressed: () async {
+                                    final taskId = '${selectedZone}_${index}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TaskNotesScreen(
+                                          taskId: taskId,
+                                          taskName: task['task'] ?? '',
+                                          zone: selectedZone,
+                                        ),
+                                      ),
+                                    );
+                                    setState(() {}); // Refresh to show note indicator
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.timer_outlined),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TimerScreen(
+                                          taskName: task['task'] ?? '',
+                                          zone: selectedZone,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                             children: [
                               Padding(
@@ -230,33 +255,38 @@ class _ZoneScreenState extends State<ZoneScreen> {
       ),
       floatingActionButton: completedCount == totalCount && totalCount > 0
           ? FloatingActionButton.extended(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('🎉 Zone Complete!'),
-                    content: Text(
-                      'Great job! You\'ve completed all $totalCount tasks in $selectedZone!',
+              onPressed: () async {
+                // Show motivational notification
+                await NotificationService.showMotivationalNotification();
+                
+                if (mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('🎉 Zone Complete!'),
+                      content: Text(
+                        'Great job! You\'ve completed all $totalCount tasks in $selectedZone!',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            setState(() {
+                              taskCompletion = {
+                                for (int i = 0; i < tasks.length; i++) '$i': false
+                              };
+                            });
+                          },
+                          child: const Text('Reset'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            taskCompletion = {
-                              for (int i = 0; i < tasks.length; i++) '$i': false
-                            };
-                          });
-                        },
-                        child: const Text('Reset'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
+                  );
+                }
               },
               icon: const Icon(Icons.celebration),
               label: const Text('Complete!'),
