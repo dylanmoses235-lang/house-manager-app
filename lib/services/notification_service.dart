@@ -293,8 +293,8 @@ class NotificationService {
       'motivational',
       'Motivational Messages',
       channelDescription: 'Encouraging messages',
-      importance: Importance.defaultImportance,
-      priority: Priority.defaultImportance,
+      importance: Importance.high,
+      priority: Priority.high,
       icon: '@mipmap/ic_launcher',
     );
 

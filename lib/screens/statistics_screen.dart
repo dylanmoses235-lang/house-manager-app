@@ -452,11 +452,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ),
               child: Row(
                 children: [
-                  Text(
-                    achievement['icon'] as String,
-                    style: TextStyle(
-                      fontSize: 32,
-                      opacity: isUnlocked ? 1.0 : 0.3,
+                  Opacity(
+                    opacity: isUnlocked ? 1.0 : 0.3,
+                    child: Text(
+                      achievement['icon'] as String,
+                      style: const TextStyle(
+                        fontSize: 32,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
