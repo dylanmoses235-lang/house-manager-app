@@ -109,31 +109,34 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _screens;
-
-  @override
-  void initState() {
-    super.initState();
-    _screens = [
-      DashboardScreen(onNavigate: _navigateToTab),
-      const ZoneScreen(),
-      const ScheduleScreen(),
-      const DeclutterScreen(),
-      const StatisticsScreen(),
-    ];
-  }
-
   void _navigateToTab(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  Widget _getScreen(int index) {
+    switch (index) {
+      case 0:
+        return DashboardScreen(onNavigate: _navigateToTab);
+      case 1:
+        return const ZoneScreen();
+      case 2:
+        return const ScheduleScreen();
+      case 3:
+        return const DeclutterScreen();
+      case 4:
+        return const StatisticsScreen();
+      default:
+        return DashboardScreen(onNavigate: _navigateToTab);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: _screens[_selectedIndex],
+        child: _getScreen(_selectedIndex),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
