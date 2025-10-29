@@ -229,15 +229,6 @@ class HouseService {
     return box.get(key, defaultValue: false);
   }
 
-  static Map<String, bool> getAllZoneTaskCompletions(String zone) {
-    final tasks = getZoneTasks(zone);
-    final completions = <String, bool>{};
-    for (int i = 0; i < tasks.length; i++) {
-      completions['$i'] = getZoneTaskCompletion(zone, i);
-    }
-    return completions;
-  }
-
   // Schedule task completion persistence
   static String _getScheduleTaskKey(int taskIndex, DateTime date) {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);

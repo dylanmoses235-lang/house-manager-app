@@ -45,7 +45,11 @@ class _ZoneScreenState extends State<ZoneScreen> {
       // Normal mode - load tasks for selected zone only
       final zoneTasks = await HouseService.getZoneTasks(selectedZone);
       tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
-      taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
+      // Build completion map from loaded tasks
+      taskCompletion = {};
+      for (int i = 0; i < tasks.length; i++) {
+        taskCompletion['$i'] = HouseService.getZoneTaskCompletion(selectedZone, i);
+      }
     }
   }
 
