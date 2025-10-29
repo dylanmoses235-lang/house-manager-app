@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -60,10 +61,7 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
         maxWidth: 1920,
         maxHeight: 1080,
         imageQuality: 85,
-      ).catchError((error) {
-        print('Image picker error: $error');
-        throw error;
-      });
+      );
 
       print('Image picked: ${image?.path}');
 
@@ -95,11 +93,32 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Photo added successfully!'),
+          content: Text('📸 Photo added successfully!'),
           duration: Duration(seconds: 1),
           backgroundColor: Colors.green,
         ),
       );
+    } on PlatformException catch (e) {
+      print('PlatformException picking image: ${e.code} - ${e.message}');
+      if (mounted) {
+        String userMessage = 'Could not access ${source == ImageSource.camera ? 'camera' : 'gallery'}';
+        if (e.code == 'camera_access_denied' || e.code == 'photo_access_denied') {
+          userMessage = 'Permission denied. Please enable in Settings > House Manager.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(userMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
     } on Exception catch (e) {
       print('Exception picking image: $e');
       if (mounted) {
@@ -107,12 +126,7 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
           SnackBar(
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'OK',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -122,29 +136,13 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Unexpected error: ${e.toString()}'),
+            content: Text('Unexpected error accessing ${source == ImageSource.camera ? 'camera' : 'gallery'}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
             action: SnackBarAction(
-              label: 'Details',
+              label: 'OK',
               textColor: Colors.white,
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Error Details'),
-                    content: SingleChildScrollView(
-                      child: Text('$e\n\n$stackTrace'),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              onPressed: () {},
             ),
           ),
         );
@@ -201,6 +199,70 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
     }
   }
 
+  Future<void> _checkCameraAndPick() async {
+    // On iOS, camera picker can crash if not properly configured
+    // Let's wrap it with additional safety
+    try {
+      Navigator.pop(context);
+      
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Opening camera...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+      
+      await Future.delayed(const Duration(milliseconds: 300));
+      await _pickImage(ImageSource.camera);
+    } on PlatformException catch (e) {
+      print('Platform exception: ${e.code} - ${e.message}');
+      if (mounted) {
+        String message = 'Camera not available';
+        if (e.code == 'camera_access_denied') {
+          message = 'Camera permission denied. Please enable in Settings.';
+        } else if (e.code == 'camera_unavailable') {
+          message = 'Camera is not available on this device.';
+        }
+        
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Camera Issue'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error opening camera: $e');
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Camera Not Available'),
+            content: const Text(
+              'The camera cannot be accessed right now. Please try choosing from gallery instead, or check your device settings.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   void _showImageSourceDialog() {
     showModalBottomSheet(
       context: context,
@@ -211,25 +273,13 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
             ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Take Photo'),
-              onTap: () async {
-                Navigator.pop(context);
-                try {
-                  await _pickImage(ImageSource.camera);
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Camera error: ${e.toString()}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
+              subtitle: const Text('Use device camera'),
+              onTap: _checkCameraAndPick,
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: const Text('Choose from Gallery'),
+              subtitle: const Text('Pick existing photo'),
               onTap: () async {
                 Navigator.pop(context);
                 try {
