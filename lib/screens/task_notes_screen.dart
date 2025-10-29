@@ -53,41 +53,61 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      print('Attempting to pick image from source: $source');
+      
       final XFile? image = await _imagePicker.pickImage(
         source: source,
         maxWidth: 1920,
         maxHeight: 1080,
         imageQuality: 85,
-      );
+      ).catchError((error) {
+        print('Image picker error: $error');
+        throw error;
+      });
 
-      if (image != null) {
-        // Save image to app directory
-        final directory = await getApplicationDocumentsDirectory();
-        final fileName = '${const Uuid().v4()}.jpg';
-        final savedImage = await File(image.path).copy(
-          '${directory.path}/$fileName',
-        );
+      print('Image picked: ${image?.path}');
 
-        setState(() {
-          _selectedPhotos.add(savedImage.path);
-        });
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Photo added successfully!'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
+      if (image == null) {
+        print('No image selected - user cancelled');
+        return;
       }
-    } catch (e) {
+
+      if (image.path.isEmpty) {
+        throw Exception('Image path is empty');
+      }
+
+      print('Getting application directory...');
+      final directory = await getApplicationDocumentsDirectory();
+      print('App directory: ${directory.path}');
+      
+      final fileName = '${const Uuid().v4()}.jpg';
+      final targetPath = '${directory.path}/$fileName';
+      print('Copying image to: $targetPath');
+      
+      final savedImage = await File(image.path).copy(targetPath);
+      print('Image saved successfully: ${savedImage.path}');
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedPhotos.add(savedImage.path);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo added successfully!'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on Exception catch (e) {
+      print('Exception picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'OK',
               textColor: Colors.white,
@@ -96,7 +116,39 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
           ),
         );
       }
-      print('Error picking image: $e');
+    } catch (e, stackTrace) {
+      print('Unexpected error picking image: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Details',
+              textColor: Colors.white,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Error Details'),
+                    content: SingleChildScrollView(
+                      child: Text('$e\n\n$stackTrace'),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -159,17 +211,39 @@ class _TaskNotesScreenState extends State<TaskNotesScreen> {
             ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Take Photo'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickImage(ImageSource.camera);
+                try {
+                  await _pickImage(ImageSource.camera);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Camera error: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: const Text('Choose from Gallery'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
+                try {
+                  await _pickImage(ImageSource.gallery);
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gallery error: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
             ),
             ListTile(
