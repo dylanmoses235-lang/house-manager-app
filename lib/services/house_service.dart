@@ -1,5 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../models/zone_task.dart';
 import '../models/schedule_task.dart';
 import '../models/declutter_day.dart';
@@ -66,22 +68,73 @@ class HouseService {
     }
   }
 
+  // Get custom zone schedule from SharedPreferences
+  static Future<Map<String, String>> getCustomZoneSchedule() async {
+    final prefs = await SharedPreferences.getInstance();
+    final scheduleJson = prefs.getString('zone_schedule');
+    if (scheduleJson != null) {
+      return Map<String, String>.from(json.decode(scheduleJson));
+    }
+    return CleaningData.zoneSchedule;
+  }
+
+  // Get custom zones list
+  static Future<List<String>> getCustomZones() async {
+    final prefs = await SharedPreferences.getInstance();
+    final customZonesJson = prefs.getString('custom_zones');
+    if (customZonesJson != null) {
+      return List<String>.from(json.decode(customZonesJson));
+    }
+    return [];
+  }
+
+  // Get all available zones (default + custom)
+  static Future<List<String>> getAllZones() async {
+    final customZones = await getCustomZones();
+    return [
+      'Kitchen',
+      'Bathroom',
+      'Bedroom',
+      'Living Room',
+      'Laundry Room',
+      'Office',
+      'Reset',
+      ...customZones,
+    ];
+  }
+
   // Get today's zone based on day of week
-  static String getTodayZone() {
+  static Future<String> getTodayZone() async {
     final dayName = DateFormat('EEEE').format(DateTime.now());
-    return CleaningData.zoneSchedule[dayName] ?? 'Kitchen';
+    final schedule = await getCustomZoneSchedule();
+    return schedule[dayName] ?? 'Kitchen';
   }
 
   // Get tomorrow's zone
-  static String getTomorrowZone() {
+  static Future<String> getTomorrowZone() async {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     final dayName = DateFormat('EEEE').format(tomorrow);
-    return CleaningData.zoneSchedule[dayName] ?? 'Kitchen';
+    final schedule = await getCustomZoneSchedule();
+    return schedule[dayName] ?? 'Kitchen';
   }
 
   // Get zone tasks for a specific zone
-  static List<Map<String, String>> getZoneTasks(String zone) {
+  static Future<List<Map<String, String>>> getZoneTasks(String zone) async {
+    // First check if there are custom tasks stored for this zone
+    final prefs = await SharedPreferences.getInstance();
+    final customTasksJson = prefs.getString('zone_tasks_$zone');
+    if (customTasksJson != null) {
+      final List<dynamic> decoded = json.decode(customTasksJson);
+      return decoded.map((task) => Map<String, String>.from(task)).toList();
+    }
+    // Otherwise return default tasks
     return CleaningData.zoneTasks[zone] ?? [];
+  }
+
+  // Save custom tasks for a zone
+  static Future<void> saveZoneTasks(String zone, List<Map<String, String>> tasks) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('zone_tasks_$zone', json.encode(tasks));
   }
 
   // Get today's schedule

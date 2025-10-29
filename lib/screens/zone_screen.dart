@@ -16,31 +16,51 @@ class _ZoneScreenState extends State<ZoneScreen> {
   late String selectedZone;
   late List<Map<String, dynamic>> tasks;
   late Map<String, bool> taskCompletion;
+  List<String> availableZones = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    selectedZone = HouseService.getTodayZone();
-    _loadTasks();
+    _initialize();
   }
 
-  void _loadTasks() {
-    final zoneTasks = HouseService.getZoneTasks(selectedZone);
+  Future<void> _initialize() async {
+    selectedZone = await HouseService.getTodayZone();
+    availableZones = await HouseService.getAllZones();
+    await _loadTasks();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _loadTasks() async {
+    final zoneTasks = await HouseService.getZoneTasks(selectedZone);
     tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
     
     // Load completion state from persistence
     taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
   }
 
-  void _changeZone(String zone) {
+  Future<void> _changeZone(String zone) async {
     setState(() {
       selectedZone = zone;
-      _loadTasks();
+      _isLoading = true;
+    });
+    await _loadTasks();
+    setState(() {
+      _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final completedCount = taskCompletion.values.where((v) => v).length;
     final totalCount = tasks.length;
     final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
@@ -49,19 +69,16 @@ class _ZoneScreenState extends State<ZoneScreen> {
       appBar: AppBar(
         title: const Text('Zone Cleaning'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_task),
+            onPressed: _showAddTaskDialog,
+            tooltip: 'Add Task',
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list),
             onSelected: _changeZone,
             itemBuilder: (context) {
-              return [
-                'Kitchen',
-                'Bathroom',
-                'Bedroom',
-                'Living Room',
-                'Laundry Room',
-                'Office',
-                'Reset',
-              ].map((zone) {
+              return availableZones.map((zone) {
                 return PopupMenuItem(
                   value: zone,
                   child: Text(zone),
@@ -253,45 +270,141 @@ class _ZoneScreenState extends State<ZoneScreen> {
           ),
         ],
       ),
-      floatingActionButton: completedCount == totalCount && totalCount > 0
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                // Show motivational notification
-                await NotificationService.showMotivationalNotification();
+      floatingActionButton: _buildFloatingActionButton(completedCount, totalCount),
+    );
+  }
+
+  Widget? _buildFloatingActionButton(int completedCount, int totalCount) {
+    // Show celebration button if all tasks completed
+    if (completedCount == totalCount && totalCount > 0) {
+      return FloatingActionButton.extended(
+        onPressed: () async {
+          // Show motivational notification
+          await NotificationService.showMotivationalNotification();
+          
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('🎉 Zone Complete!'),
+                content: Text(
+                  'Great job! You\'ve completed all $totalCount tasks in $selectedZone!',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        taskCompletion = {
+                          for (int i = 0; i < tasks.length; i++) '$i': false
+                        };
+                      });
+                    },
+                    child: const Text('Reset'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
+        icon: const Icon(Icons.celebration),
+        label: const Text('Complete!'),
+      );
+    }
+    
+    // Show add tasks button if zone has no tasks
+    if (totalCount == 0) {
+      return FloatingActionButton.extended(
+        onPressed: _showAddTaskDialog,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Tasks'),
+      );
+    }
+    
+    return null;
+  }
+
+  void _showAddTaskDialog() {
+    final taskController = TextEditingController();
+    final howToController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Task to $selectedZone'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: taskController,
+                decoration: const InputDecoration(
+                  labelText: 'Task Name',
+                  hintText: 'e.g., Clean garage floor',
+                  border: OutlineInputBorder(),
+                ),
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: howToController,
+                decoration: const InputDecoration(
+                  labelText: 'How to do it',
+                  hintText: 'Brief instructions...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (taskController.text.isNotEmpty) {
+                final newTask = {
+                  'task': taskController.text,
+                  'howTo': howToController.text.isEmpty 
+                      ? 'No instructions provided' 
+                      : howToController.text,
+                };
                 
-                if (mounted) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('🎉 Zone Complete!'),
-                      content: Text(
-                        'Great job! You\'ve completed all $totalCount tasks in $selectedZone!',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            setState(() {
-                              taskCompletion = {
-                                for (int i = 0; i < tasks.length; i++) '$i': false
-                              };
-                            });
-                          },
-                          child: const Text('Reset'),
-                        ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
+                // Add to current tasks list
+                final updatedTasks = [...tasks, newTask];
+                
+                // Save to SharedPreferences
+                await HouseService.saveZoneTasks(
+                  selectedZone, 
+                  updatedTasks.map((t) => Map<String, String>.from(t)).toList(),
+                );
+                
+                // Reload tasks
+                await _loadTasks();
+                setState(() {
+                  _isLoading = false;
+                });
+                
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Task added successfully')),
                   );
                 }
-              },
-              icon: const Icon(Icons.celebration),
-              label: const Text('Complete!'),
-            )
-          : null,
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -15,10 +15,28 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  String todayZone = 'Kitchen';
+  String tomorrowZone = 'Kitchen';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadZones();
+  }
+
+  Future<void> _loadZones() async {
+    final today = await HouseService.getTodayZone();
+    final tomorrow = await HouseService.getTomorrowZone();
+    setState(() {
+      todayZone = today;
+      tomorrowZone = tomorrow;
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final todayZone = HouseService.getTodayZone();
-    final tomorrowZone = HouseService.getTomorrowZone();
     final currentDeclutter = HouseService.getCurrentDeclutterDay();
     final declutterProgress = HouseService.getDeclutterProgress();
     final startDate = HouseService.getChallengeStartDate();
@@ -55,6 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          await _loadZones();
           setState(() {});
         },
         child: SingleChildScrollView(

@@ -16,12 +16,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  Map<String, String> _zoneSchedule = {};
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+    _selectedEvents = ValueNotifier([]);
+    _initializeCalendar();
+  }
+
+  Future<void> _initializeCalendar() async {
+    _zoneSchedule = await HouseService.getCustomZoneSchedule();
+    await _loadEventsForDay(_selectedDay!);
+  }
+
+  Future<void> _loadEventsForDay(DateTime day) async {
+    final events = await _getEventsForDay(day);
+    _selectedEvents.value = events;
   }
 
   @override
@@ -30,12 +42,60 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  List<_CalendarEvent> _getEventsForDay(DateTime day) {
+  List<_CalendarEvent> _getEventsForDaySync(DateTime day) {
     final events = <_CalendarEvent>[];
     
-    // Get zone for this day
+    // Get zone for this day from cached schedule
     final dayName = DateFormat('EEEE').format(day);
-    final zone = CleaningData.zoneSchedule[dayName];
+    final zone = _zoneSchedule[dayName];
+    if (zone != null) {
+      events.add(_CalendarEvent(
+        title: 'Zone: $zone',
+        type: 'zone',
+        icon: Icons.cleaning_services,
+        color: Colors.blue,
+      ));
+    }
+
+    // Get schedule type
+    final isWeekend = day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
+    events.add(_CalendarEvent(
+      title: isWeekend ? 'Weekend Schedule' : 'Weekday Schedule',
+      type: 'schedule',
+      icon: Icons.schedule,
+      color: Colors.orange,
+    ));
+
+    // Check if there's a declutter task for this day
+    final challengeStartDate = HouseService.getChallengeStartDate();
+    if (challengeStartDate != null) {
+      final daysSinceStart = day.difference(challengeStartDate).inDays + 1;
+      if (daysSinceStart >= 1 && daysSinceStart <= 30) {
+        final declutterDays = HouseService.getAllDeclutterDays();
+        final declutterDay = declutterDays.firstWhere(
+          (d) => d.day == daysSinceStart,
+          orElse: () => declutterDays.first,
+        );
+        events.add(_CalendarEvent(
+          title: 'Declutter: ${declutterDay.area}',
+          type: 'declutter',
+          icon: Icons.delete_sweep,
+          color: Colors.purple,
+          subtitle: declutterDay.task,
+        ));
+      }
+    }
+
+    return events;
+  }
+
+  Future<List<_CalendarEvent>> _getEventsForDay(DateTime day) async {
+    final events = <_CalendarEvent>[];
+    
+    // Get zone for this day from custom schedule
+    final dayName = DateFormat('EEEE').format(day);
+    final schedule = await HouseService.getCustomZoneSchedule();
+    final zone = schedule[dayName];
     if (zone != null) {
       events.add(_CalendarEvent(
         title: 'Zone: $zone',
@@ -84,7 +144,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _focusedDay = focusedDay;
       });
 
-      _selectedEvents.value = _getEventsForDay(selectedDay);
+      _loadEventsForDay(selectedDay);
     }
   }
 
@@ -100,8 +160,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               setState(() {
                 _focusedDay = DateTime.now();
                 _selectedDay = DateTime.now();
-                _selectedEvents.value = _getEventsForDay(_selectedDay!);
               });
+              _loadEventsForDay(_selectedDay!);
             },
           ),
         ],
@@ -116,7 +176,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               focusedDay: _focusedDay,
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
               calendarFormat: _calendarFormat,
-              eventLoader: _getEventsForDay,
+              eventLoader: _getEventsForDaySync,
               startingDayOfWeek: StartingDayOfWeek.monday,
               calendarStyle: CalendarStyle(
                 outsideDaysVisible: false,
