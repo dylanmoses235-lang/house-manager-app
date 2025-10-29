@@ -368,4 +368,15 @@ class HouseService {
       await box.delete(key);
     }
   }
+
+  // Mixed Zone Mode preference
+  static Future<bool> getMixedZoneMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('mixed_zone_mode') ?? false;
+  }
+
+  static Future<void> setMixedZoneMode(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('mixed_zone_mode', enabled);
+  }
 }
