@@ -199,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              widget.onNavigate(3); // Navigate to Declutter tab
+                              widget.onNavigate(4); // Navigate to Declutter tab
                             },
                             child: const Text('View All →'),
                           ),
@@ -226,16 +226,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: _buildActionCard(
                       context,
+                      'Daily Tasks',
+                      _getDailyTasksPreview(),
+                      Icons.today,
+                      Colors.purple,
+                      () {
+                        widget.onNavigate(1); // Navigate to Daily Tasks tab
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionCard(
+                      context,
                       'Zone Tasks',
                       'Clean $todayZone',
                       Icons.cleaning_services,
                       Colors.blue,
                       () {
-                        widget.onNavigate(1); // Navigate to Zone tab
+                        widget.onNavigate(2); // Navigate to Zone tab
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Expanded(
                     child: _buildActionCard(
                       context,
@@ -244,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.schedule,
                       Colors.orange,
                       () {
-                        widget.onNavigate(2); // Navigate to Schedule tab
+                        widget.onNavigate(3); // Navigate to Schedule tab
                       },
                     ),
                   ),
@@ -279,7 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.analytics,
                       Colors.purple,
                       () {
-                        widget.onNavigate(4); // Navigate to Statistics tab
+                        widget.onNavigate(5); // Navigate to Statistics tab
                       },
                     ),
                   ),
@@ -474,5 +491,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  String _getDailyTasksPreview() {
+    final urgentCount = HouseService.getUrgentDailyTaskCount();
+    final completedToday = HouseService.getDailyTasksCompletedToday();
+    final totalTasks = HouseService.getAllDailyRecurringTasks().length;
+    
+    if (completedToday == totalTasks) {
+      return 'All done today! 🎉';
+    } else if (urgentCount > 0) {
+      return '$urgentCount urgent tasks!';
+    } else {
+      return '$completedToday/$totalTasks done';
+    }
   }
 }

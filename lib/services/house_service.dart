@@ -7,7 +7,9 @@ import '../models/schedule_task.dart';
 import '../models/declutter_day.dart';
 import '../models/supply_item.dart';
 import '../models/task_note.dart';
+import '../models/daily_recurring_task.dart';
 import '../data/cleaning_data.dart';
+import '../data/daily_tasks_data.dart';
 
 class HouseService {
   static const String zoneTasksBox = 'zone_tasks';
@@ -18,6 +20,7 @@ class HouseService {
   static const String statisticsBox = 'statistics';
   static const String suppliesBox = 'supplies';
   static const String taskNotesBox = 'task_notes';
+  static const String dailyRecurringTasksBox = 'daily_recurring_tasks';
 
   static Future<void> initialize() async {
     await Hive.initFlutter();
@@ -28,6 +31,7 @@ class HouseService {
     Hive.registerAdapter(DeclutterDayAdapter());
     Hive.registerAdapter(SupplyItemAdapter());
     Hive.registerAdapter(TaskNoteAdapter());
+    Hive.registerAdapter(DailyRecurringTaskAdapter());
 
     // Open boxes
     await Hive.openBox<ZoneTask>(zoneTasksBox);
@@ -35,6 +39,7 @@ class HouseService {
     await Hive.openBox<DeclutterDay>(declutterBox);
     await Hive.openBox<SupplyItem>(suppliesBox);
     await Hive.openBox<TaskNote>(taskNotesBox);
+    await Hive.openBox<DailyRecurringTask>(dailyRecurringTasksBox);
     await Hive.openBox(settingsBox);
     await Hive.openBox(dailyTaskCompletionBox);
     await Hive.openBox(statisticsBox);
@@ -50,9 +55,15 @@ class HouseService {
       // Initialize declutter challenge
       await _initializeDeclutter();
       
+      // Initialize daily recurring tasks
+      await _initializeDailyRecurringTasks();
+      
       settings.put('initialized', true);
       settings.put('challengeStartDate', DateTime.now().toIso8601String());
     }
+    
+    // Always update daily tasks to check for accumulation
+    await updateDailyTaskAccumulation();
   }
 
   static Future<void> _initializeDeclutter() async {
@@ -377,5 +388,69 @@ class HouseService {
   static Future<void> setMixedZoneMode(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('mixed_zone_mode', enabled);
+  }
+
+  // Daily Recurring Tasks Management
+  static Future<void> _initializeDailyRecurringTasks() async {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    
+    // Only initialize if empty
+    if (box.isEmpty) {
+      for (var taskData in DailyTasksData.dailyRecurringTasks) {
+        final task = DailyRecurringTask(
+          id: taskData['id']!,
+          name: taskData['name']!,
+          description: taskData['description']!,
+          emoji: taskData['emoji']!,
+        );
+        await box.add(task);
+      }
+    }
+  }
+
+  static List<DailyRecurringTask> getAllDailyRecurringTasks() {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    return box.values.toList();
+  }
+
+  static DailyRecurringTask? getDailyRecurringTaskById(String id) {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    try {
+      return box.values.firstWhere((task) => task.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<void> completeDailyRecurringTask(String taskId) async {
+    final task = getDailyRecurringTaskById(taskId);
+    if (task != null) {
+      task.completeToday();
+      await task.save();
+      
+      // Update statistics
+      await _recordTaskCompletion('daily_recurring', taskId);
+    }
+  }
+
+  static Future<void> updateDailyTaskAccumulation() async {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    
+    for (var task in box.values) {
+      task.updateAccumulation();
+      await task.save();
+    }
+  }
+
+  // Get count of urgent daily tasks (more than 2 days behind)
+  static int getUrgentDailyTaskCount() {
+    final tasks = getAllDailyRecurringTasks();
+    return tasks.where((task) => task.getDaysAccumulated() >= 2).length;
+  }
+
+  // Get count of daily tasks completed today
+  static int getDailyTasksCompletedToday() {
+    final tasks = getAllDailyRecurringTasks();
+    return tasks.where((task) => task.isCompletedToday).length;
   }
 }

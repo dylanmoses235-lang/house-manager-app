@@ -8,6 +8,7 @@ import 'screens/schedule_screen.dart';
 import 'screens/declutter_screen.dart';
 import 'screens/statistics_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/daily_tasks_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,6 +151,11 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.today_outlined),
+            selectedIcon: Icon(Icons.today),
+            label: 'Daily',
           ),
           NavigationDestination(
             icon: Icon(Icons.cleaning_services_outlined),
