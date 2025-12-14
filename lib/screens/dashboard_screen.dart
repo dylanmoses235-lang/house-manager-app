@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../services/house_service.dart';
+import '../widgets/weekly_zone_plan_card.dart';
 import 'shopping_list_screen.dart';
 import 'calendar_screen.dart';
 
@@ -115,6 +116,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Weekly Zone Plan Card
+              const WeeklyZonePlanCard(),
               const SizedBox(height: 16),
 
               // 30-Day Declutter Challenge Card

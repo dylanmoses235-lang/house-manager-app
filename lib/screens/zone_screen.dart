@@ -18,6 +18,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
   late Map<String, bool> taskCompletion;
   List<String> availableZones = [];
   bool _isLoading = true;
+  bool _isMixedMode = false; // New: Mixed Zones Mode toggle
 
   @override
   void initState() {
@@ -35,11 +36,40 @@ class _ZoneScreenState extends State<ZoneScreen> {
   }
 
   Future<void> _loadTasks() async {
-    final zoneTasks = await HouseService.getZoneTasks(selectedZone);
-    tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
-    
-    // Load completion state from persistence
-    taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
+    if (_isMixedMode) {
+      // Load ALL tasks from ALL zones
+      List<Map<String, dynamic>> allTasks = [];
+      taskCompletion = {};
+      
+      for (String zone in availableZones) {
+        final zoneTasks = await HouseService.getZoneTasks(zone);
+        final zoneCompletions = HouseService.getAllZoneTaskCompletions(zone);
+        
+        // Add zone info and color to each task
+        for (int i = 0; i < zoneTasks.length; i++) {
+          final taskWithZone = Map<String, dynamic>.from(zoneTasks[i]);
+          taskWithZone['zone'] = zone;
+          taskWithZone['zoneColor'] = _getZoneColor(zone);
+          taskWithZone['zoneIndex'] = i; // Store original index
+          taskWithZone['taskKey'] = '${zone}_$i'; // Unique key for completion
+          allTasks.add(taskWithZone);
+        }
+        
+        // Merge completions with zone-prefixed keys
+        zoneCompletions.forEach((key, value) {
+          taskCompletion['${zone}_$key'] = value;
+        });
+      }
+      
+      tasks = allTasks;
+    } else {
+      // Load single zone (original behavior)
+      final zoneTasks = await HouseService.getZoneTasks(selectedZone);
+      tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
+      
+      // Load completion state from persistence
+      taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
+    }
   }
 
   Future<void> _changeZone(String zone) async {
@@ -66,6 +96,28 @@ class _ZoneScreenState extends State<ZoneScreen> {
     return !defaultZones.contains(zone);
   }
 
+  Color _getZoneColor(String zone) {
+    // Return color based on zone name (matches phone app)
+    switch (zone) {
+      case 'Kitchen':
+        return Colors.blue;
+      case 'Bathroom':
+        return Colors.cyan;
+      case 'Bedroom':
+        return Colors.purple;
+      case 'Living Room':
+        return Colors.green;
+      case 'Laundry Room':
+        return Colors.orange;
+      case 'Office':
+        return Colors.red;
+      case 'Reset':
+        return Colors.grey;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -80,28 +132,47 @@ class _ZoneScreenState extends State<ZoneScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Zone Cleaning'),
+        title: Text(_isMixedMode ? 'Mixed Zones Mode' : 'Zone Cleaning'),
         actions: [
+          // Mixed Mode Toggle
           IconButton(
-            icon: const Icon(Icons.add_task),
-            onPressed: () {
-              print('Add Task button clicked for zone: $selectedZone'); // Debug
-              _showAddTaskDialog();
+            icon: Icon(_isMixedMode ? Icons.close : Icons.apps),
+            onPressed: () async {
+              setState(() {
+                _isMixedMode = !_isMixedMode;
+                _isLoading = true;
+              });
+              await _loadTasks();
+              setState(() {
+                _isLoading = false;
+              });
             },
-            tooltip: 'Add Task',
+            tooltip: _isMixedMode ? 'Exit Mixed Mode' : 'Mixed Zones Mode',
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
-            onSelected: _changeZone,
-            itemBuilder: (context) {
-              return availableZones.map((zone) {
-                return PopupMenuItem(
-                  value: zone,
-                  child: Text(zone),
-                );
-              }).toList();
-            },
-          ),
+          // Add Task button (hide in mixed mode)
+          if (!_isMixedMode)
+            IconButton(
+              icon: const Icon(Icons.add_task),
+              onPressed: () {
+                print('Add Task button clicked for zone: $selectedZone'); // Debug
+                _showAddTaskDialog();
+              },
+              tooltip: 'Add Task',
+            ),
+          // Zone filter (hide in mixed mode)
+          if (!_isMixedMode)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.filter_list),
+              onSelected: _changeZone,
+              itemBuilder: (context) {
+                return availableZones.map((zone) {
+                  return PopupMenuItem(
+                    value: zone,
+                    child: Text(zone),
+                  );
+                }).toList();
+              },
+            ),
         ],
       ),
       body: Column(
@@ -119,17 +190,32 @@ class _ZoneScreenState extends State<ZoneScreen> {
             ),
             child: Column(
               children: [
-                Text(
-                  selectedZone,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                if (_isMixedMode) ..[
+                  const Icon(Icons.apps, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'All Zones Mixed!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
                   ),
-                ),
+                ] else ..[
+                  Text(
+                    selectedZone,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Text(
-                  '$completedCount of $totalCount tasks completed',
+                  _isMixedMode 
+                    ? '$completedCount of $totalCount tasks completed across all zones'
+                    : '$completedCount of $totalCount tasks completed',
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -189,7 +275,10 @@ class _ZoneScreenState extends State<ZoneScreen> {
                     itemCount: tasks.length,
                     itemBuilder: (context, index) {
                       final task = tasks[index];
-                      final isCompleted = taskCompletion['$index'] ?? false;
+                      final taskKey = _isMixedMode ? task['taskKey'] : '$index';
+                      final taskZone = _isMixedMode ? task['zone'] ?? selectedZone : selectedZone;
+                      final taskIndex = _isMixedMode ? task['zoneIndex'] ?? index : index;
+                      final isCompleted = taskCompletion[taskKey] ?? false;
                       
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -203,44 +292,72 @@ class _ZoneScreenState extends State<ZoneScreen> {
                               onChanged: (value) async {
                                 final newValue = value ?? false;
                                 await HouseService.setZoneTaskCompletion(
-                                  selectedZone, 
-                                  index, 
+                                  taskZone, 
+                                  taskIndex, 
                                   newValue,
                                 );
                                 setState(() {
-                                  taskCompletion['$index'] = newValue;
+                                  taskCompletion[taskKey] = newValue;
                                 });
                               },
                             ),
-                            title: Text(
-                              task['task'] ?? '',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                decoration: isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
+                            title: Row(
+                              children: [
+                                // Zone badge (only in mixed mode)
+                                if (_isMixedMode && task['zone'] != null) ..[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: task['zoneColor'] ?? Colors.grey,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      task['zone'],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    task['task'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      decoration: isCompleted
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (_isCustomZone(selectedZone))
+                                if (_isCustomZone(taskZone) && !_isMixedMode)
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined),
-                                    onPressed: () => _showEditTaskDialog(index),
+                                    onPressed: () => _showEditTaskDialog(taskIndex),
                                     tooltip: 'Edit Task',
                                   ),
                                 IconButton(
                                   icon: const Icon(Icons.note_outlined),
                                   onPressed: () async {
-                                    final taskId = '${selectedZone}_${index}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
+                                    final taskId = '${taskZone}_${taskIndex}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => TaskNotesScreen(
                                           taskId: taskId,
                                           taskName: task['task'] ?? '',
-                                          zone: selectedZone,
+                                          zone: taskZone,
                                         ),
                                       ),
                                     );
@@ -255,7 +372,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
                                       MaterialPageRoute(
                                         builder: (context) => TimerScreen(
                                           taskName: task['task'] ?? '',
-                                          zone: selectedZone,
+                                          zone: taskZone,
                                         ),
                                       ),
                                     );
@@ -303,6 +420,25 @@ class _ZoneScreenState extends State<ZoneScreen> {
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(completedCount, totalCount),
+      bottomNavigationBar: _isMixedMode 
+        ? Container(
+            padding: const EdgeInsets.all(12),
+            color: Theme.of(context).colorScheme.secondaryContainer,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('🎨 ', style: TextStyle(fontSize: 16)),
+                Text(
+                  'Mixed Zones Mode: Tasks from all zones!',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : null,
     );
   }
 
