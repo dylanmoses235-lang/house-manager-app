@@ -1,145 +1,87 @@
 #!/bin/bash
 
-# House Manager - iOS Build Script
-# This script helps build and install the app on your iPhone
+# House Manager - iPhone Build Script
+# This script helps you build and deploy the app to your iPhone
 
-echo "🏠 House Manager - iOS Build Script"
-echo "===================================="
+set -e
+
+echo "🏠 House Manager - iPhone Build Script"
+echo "======================================="
 echo ""
-
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
 
 # Check if Flutter is installed
-echo -e "${BLUE}Checking Flutter installation...${NC}"
 if ! command -v flutter &> /dev/null; then
-    echo -e "${RED}❌ Flutter is not installed!${NC}"
-    echo ""
-    echo "Please install Flutter first:"
-    echo "1. Visit: https://flutter.dev/docs/get-started/install/macos"
-    echo "2. Or run: git clone https://github.com/flutter/flutter.git -b stable"
-    echo "3. Add Flutter to PATH"
-    echo ""
+    echo "❌ Flutter is not installed!"
+    echo "Please install Flutter first: https://docs.flutter.dev/get-started/install"
     exit 1
-else
-    echo -e "${GREEN}✅ Flutter is installed${NC}"
-    flutter --version
-    echo ""
 fi
 
-# Check Flutter doctor
-echo -e "${BLUE}Running Flutter doctor...${NC}"
-flutter doctor
+echo "✅ Flutter found: $(flutter --version | head -n 1)"
 echo ""
 
-# Check for connected devices
-echo -e "${BLUE}Checking for connected iPhone...${NC}"
-DEVICES=$(flutter devices)
-echo "$DEVICES"
-echo ""
-
-if [[ $DEVICES == *"No devices detected"* ]]; then
-    echo -e "${YELLOW}⚠️  No iPhone detected!${NC}"
-    echo ""
-    echo "Please connect your iPhone via USB and:"
-    echo "1. Unlock your iPhone"
-    echo "2. Trust this computer if prompted"
-    echo "3. Enable Developer Mode (iOS 16+):"
-    echo "   Settings → Privacy & Security → Developer Mode → ON"
-    echo ""
-    read -p "Press Enter when iPhone is connected..."
-    echo ""
-    flutter devices
-    echo ""
+# Check if in correct directory
+if [ ! -f "pubspec.yaml" ]; then
+    echo "❌ Not in project directory!"
+    echo "Please run this script from the house-manager-app directory"
+    exit 1
 fi
 
-# Clean previous builds
-echo -e "${BLUE}Cleaning previous builds...${NC}"
-flutter clean
-echo -e "${GREEN}✅ Clean complete${NC}"
-echo ""
-
-# Get dependencies
-echo -e "${BLUE}Installing dependencies...${NC}"
+echo "📦 Getting Flutter dependencies..."
 flutter pub get
-echo -e "${GREEN}✅ Dependencies installed${NC}"
 echo ""
 
-# Check if iOS pods need updating
-echo -e "${BLUE}Checking CocoaPods...${NC}"
-cd ios
-if [ -f "Podfile" ]; then
-    echo "Installing iOS dependencies..."
-    pod install
-    echo -e "${GREEN}✅ Pods installed${NC}"
-else
-    echo -e "${YELLOW}⚠️  No Podfile found (this is normal for some setups)${NC}"
-fi
-cd ..
+echo "🧹 Cleaning previous builds..."
+flutter clean
 echo ""
 
-# Ask user for build type
-echo -e "${YELLOW}Select build type:${NC}"
-echo "1) Debug (faster build, hot reload enabled)"
-echo "2) Release (optimized, recommended for actual use)"
-echo ""
-read -p "Enter choice (1 or 2): " BUILD_TYPE
+echo "📱 Available devices:"
+flutter devices
 echo ""
 
-# Build and run
-if [ "$BUILD_TYPE" == "2" ]; then
-    echo -e "${BLUE}Building in RELEASE mode...${NC}"
-    echo "This may take 5-10 minutes for the first build..."
-    echo ""
-    flutter run --release
-else
-    echo -e "${BLUE}Building in DEBUG mode...${NC}"
-    echo "This may take 5-10 minutes for the first build..."
-    echo ""
-    flutter run
-fi
+echo "🔨 Building for iPhone..."
+echo ""
+echo "Choose build method:"
+echo "1) Build and run on connected iPhone (recommended)"
+echo "2) Build release IPA file"
+echo "3) Open in Xcode"
+echo ""
 
-# Check exit code
-if [ $? -eq 0 ]; then
-    echo ""
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}✅ BUILD SUCCESSFUL!${NC}"
-    echo -e "${GREEN}========================================${NC}"
-    echo ""
-    echo "Your House Manager app should now be running on your iPhone!"
-    echo ""
-    echo "If you see 'Untrusted Developer' on your iPhone:"
-    echo "1. Go to Settings → General → VPN & Device Management"
-    echo "2. Trust your developer profile"
-    echo "3. Reopen the app"
-    echo ""
-else
-    echo ""
-    echo -e "${RED}========================================${NC}"
-    echo -e "${RED}❌ BUILD FAILED${NC}"
-    echo -e "${RED}========================================${NC}"
-    echo ""
-    echo "Common issues:"
-    echo ""
-    echo "1. SIGNING ERROR:"
-    echo "   - Open: ios/Runner.xcworkspace in Xcode"
-    echo "   - Select Runner → Signing & Capabilities"
-    echo "   - Check 'Automatically manage signing'"
-    echo "   - Select your Team (Apple ID)"
-    echo ""
-    echo "2. NO DEVICE:"
-    echo "   - Connect iPhone via USB"
-    echo "   - Unlock and trust computer"
-    echo "   - Enable Developer Mode (iOS 16+)"
-    echo ""
-    echo "3. COCOAPODS ERROR:"
-    echo "   - Run: sudo gem install cocoapods"
-    echo "   - Then: cd ios && pod install && cd .."
-    echo ""
-    echo "For detailed logs, check the output above."
-    echo ""
-fi
+read -p "Enter choice (1-3): " choice
+
+case $choice in
+    1)
+        echo ""
+        echo "🚀 Building and installing on iPhone..."
+        echo "Make sure your iPhone is connected and trusted!"
+        echo ""
+        flutter run --release
+        ;;
+    2)
+        echo ""
+        echo "📦 Building release IPA..."
+        flutter build ios --release
+        echo ""
+        echo "✅ Build complete! IPA location:"
+        echo "   build/ios/iphoneos/Runner.app"
+        ;;
+    3)
+        echo ""
+        echo "🔧 Opening in Xcode..."
+        open ios/Runner.xcworkspace
+        echo ""
+        echo "ℹ️  In Xcode:"
+        echo "   1. Select your iPhone as target"
+        echo "   2. Click the ▶️ Play button to build and run"
+        ;;
+    *)
+        echo "❌ Invalid choice"
+        exit 1
+        ;;
+esac
+
+echo ""
+echo "✨ Done!"
+echo ""
+echo "📝 Remember to trust the developer certificate on your iPhone:"
+echo "   Settings → General → VPN & Device Management"
+echo ""
