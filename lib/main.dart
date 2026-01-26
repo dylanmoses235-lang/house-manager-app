@@ -3,12 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/house_service.dart';
 import 'services/notification_service.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/daily_tasks_screen.dart';
 import 'screens/zone_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/declutter_screen.dart';
 import 'screens/statistics_screen.dart';
 import 'screens/settings_screen.dart';
-// Removed daily_tasks_screen - not used in phone app navigation
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -148,14 +148,14 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.check_circle_outline),
+            selectedIcon: Icon(Icons.check_circle),
+            label: 'Daily',
           ),
           NavigationDestination(
             icon: Icon(Icons.cleaning_services_outlined),
             selectedIcon: Icon(Icons.cleaning_services),
-            label: 'Zone',
+            label: 'Deep Clean',
           ),
           NavigationDestination(
             icon: Icon(Icons.schedule_outlined),

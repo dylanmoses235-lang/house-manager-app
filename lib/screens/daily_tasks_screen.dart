@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/house_service.dart';
 import '../models/daily_recurring_task.dart';
 import '../data/daily_tasks_data.dart';
+import 'zone_screen.dart';
 
 class DailyTasksScreen extends StatefulWidget {
   const DailyTasksScreen({super.key});
@@ -12,6 +13,7 @@ class DailyTasksScreen extends StatefulWidget {
 
 class _DailyTasksScreenState extends State<DailyTasksScreen> {
   List<DailyRecurringTask> _tasks = [];
+  String _todayZone = '';
   bool _isLoading = true;
 
   @override
@@ -27,12 +29,14 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     
     await HouseService.updateDailyTaskAccumulation();
     final tasks = HouseService.getAllDailyRecurringTasks();
+    final zone = await HouseService.getTodayZone();
     
     // Sort by urgency (most days accumulated first)
     tasks.sort((a, b) => b.getDaysAccumulated().compareTo(a.getDaysAccumulated()));
     
     setState(() {
       _tasks = tasks;
+      _todayZone = zone;
       _isLoading = false;
     });
   }
@@ -209,6 +213,128 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       ),
                     ),
 
+                  // Today's Deep Clean Zone Card
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ZoneScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  colorScheme.tertiaryContainer,
+                                  colorScheme.tertiaryContainer.withOpacity(0.6),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.onTertiaryContainer.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.cleaning_services,
+                                        color: colorScheme.onTertiaryContainer,
+                                        size: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Today\'s Deep Clean',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: colorScheme.onTertiaryContainer.withOpacity(0.8),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _todayZone.isEmpty ? 'Loading...' : _todayZone,
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme.onTertiaryContainer,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: colorScheme.onTertiaryContainer,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tap to see deep cleaning tasks for this zone',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.onTertiaryContainer.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Divider with label
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(child: Divider(color: colorScheme.outline)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'DAILY TASKS',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.outline,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: colorScheme.outline)),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   // Task list
                   SliverPadding(
                     padding: const EdgeInsets.all(16),
@@ -378,7 +504,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       backgroundColor: urgencyColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
+                      sh                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
