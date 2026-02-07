@@ -1,5 +1,7 @@
 class CleaningData {
-  // Zone to Day mapping
+  // Zone to Day mapping - Rotating Deep Cleaning Schedule
+  // Daily essentials (dishes, trash, etc.) are done EVERY day
+  // Zone tasks are the DEEP CLEANING for each area
   static Map<String, String> zoneSchedule = {
     'Monday': 'Kitchen',
     'Tuesday': 'Bathroom',
@@ -10,24 +12,21 @@ class CleaningData {
     'Sunday': 'Reset',
   };
 
-  // Zone cleaning tasks (from your spreadsheet)
+  // Zone DEEP CLEANING tasks - these are done on your zone day
+  // NOTE: Daily essentials like dishes, counters, trash are done EVERY DAY
+  // These are the deeper/less frequent tasks for each zone
   static Map<String, List<Map<String, String>>> zoneTasks = {
     'Kitchen': [
       {
         'task': 'Clear all clutter from center table',
-        'howTo': 'Put away items, trash the garbage, create clear workspace - this is priority #1'
+        'howTo': 'Put away items, trash the garbage, create clear workspace - deep organization'
       },
+      // REMOVED dishes - that's done DAILY now!
+      // REMOVED countertops - that's done DAILY now!
+      // REMOVED trash - that's done DAILY now!
       {
-        'task': 'Clear and organize countertops',
-        'howTo': 'Put away items, wipe down all counter surfaces'
-      },
-      {
-        'task': 'Wash all dishes in sink',
-        'howTo': 'Load dishwasher or hand-wash, dry and put away'
-      },
-      {
-        'task': 'Wipe stovetop',
-        'howTo': 'Remove pots/pans first, use degreaser on burners and knobs'
+        'task': 'Deep clean stovetop',
+        'howTo': 'Remove grates, deep clean with degreaser, clean knobs thoroughly'
       },
       {
         'task': 'Clean microwave inside/out',
@@ -42,8 +41,8 @@ class CleaningData {
         'howTo': 'All handles, lower edges where dogs reach'
       },
       {
-        'task': 'Clean sink and faucet',
-        'howTo': 'Scrub basin, shine faucet, wipe around edges'
+        'task': 'Deep clean sink and faucet',
+        'howTo': 'Deep scrub basin and drain, polish faucet, detail edges and caulk'
       },
       {
         'task': 'Wipe backsplash tiles',
@@ -54,12 +53,12 @@ class CleaningData {
         'howTo': 'Toaster, coffee maker - including underneath'
       },
       {
-        'task': 'Empty trash completely',
-        'howTo': 'Take out bag, wipe can inside/out'
+        'task': 'Deep clean trash can',
+        'howTo': 'Wash can inside and out, scrub lid, sanitize'
       },
       {
-        'task': 'Clean dog bowl area',
-        'howTo': 'Wipe bowls, clean feeding mat, sweep around it'
+        'task': 'Deep clean dog bowl area',
+        'howTo': 'Scrub feeding mat, wash area floor, organize dog supplies'
       },
       {
         'task': 'Sweep entire floor',
@@ -79,13 +78,15 @@ class CleaningData {
         'task': 'Pick up all floor items',
         'howTo': 'Clothes to hamper, trash to bin - clear the floor first'
       },
+      // REMOVED quick sink wipe - that's done DAILY now!
+      // This is DEEP CLEAN day for bathroom
       {
         'task': 'Clear vanity countertop',
         'howTo': 'Put items away or in organizer basket'
       },
       {
-        'task': 'Wipe vanity counter & backsplash',
-        'howTo': 'Full counter wipe after clearing items'
+        'task': 'Deep clean vanity and backsplash',
+        'howTo': 'Move all items, scrub backsplash, clean under items, organize drawers'
       },
       {
         'task': 'Clean mirror edge to edge',
@@ -96,20 +97,12 @@ class CleaningData {
         'howTo': 'Scrub basin, polish faucet and handles'
       },
       {
-        'task': 'Scrub toilet bowl',
-        'howTo': 'Brush and cleaner, under rim too'
+        'task': 'Deep clean toilet',
+        'howTo': 'Scrub bowl + under rim, wipe tank/lid/seat/base/floor - full detail clean'
       },
       {
-        'task': 'Wipe toilet exterior',
-        'howTo': 'Tank, lid, seat, base, floor around it - top to bottom'
-      },
-      {
-        'task': 'Wipe shower/tub walls',
-        'howTo': 'Gray tiles and brown accent tiles, focus on soap scum'
-      },
-      {
-        'task': 'Clean shower floor/tub',
-        'howTo': 'Scrub and rinse grime'
+        'task': 'Deep clean shower/tub',
+        'howTo': 'Scrub walls, floor, ledges thoroughly - tackle soap scum and grime'
       },
       {
         'task': 'Wipe shower ledge & bottles',
@@ -128,12 +121,8 @@ class CleaningData {
         'howTo': 'Replace pad if needed, wipe mat underneath'
       },
       {
-        'task': 'Sweep/vacuum floor',
-        'howTo': 'All corners, behind toilet, get dog hair'
-      },
-      {
-        'task': 'Mop floor',
-        'howTo': 'Disinfectant mop, pay attention to toilet base and grout'
+        'task': 'Deep sweep and mop floor',
+        'howTo': 'Thorough sweep of all corners, behind toilet, then disinfectant mop'
       },
       {
         'task': 'Wipe baseboards',
@@ -141,95 +130,68 @@ class CleaningData {
       },
     ],
     'Bedroom': [
+      // Daily: make bed, pick up floor clutter
+      // Zone day: DEEP CLEAN
       {
         'task': 'Make bed fully',
         'howTo': 'Straighten sheets, pillows, blankets - remove any clutter from bed'
       },
       {
-        'task': 'Pick up floor clutter',
-        'howTo': 'Boxes, bags, wires, clothes - clear the floor completely'
+        'task': 'Deep floor cleaning',
+        'howTo': 'Clear all floor items, sweep thoroughly including under furniture, spot mop'
       },
       {
-        'task': 'Clear dresser top clutter',
-        'howTo': 'Organize items, trash empties, manage cables'
-      },
-      {
-        'task': 'Dust dresser surface',
-        'howTo': 'Wipe top, sides, around TV and small shelf'
+        'task': 'Deep clean and organize dresser',
+        'howTo': 'Clear all clutter, dust thoroughly, organize inside drawers, clean around TV'
       },
       {
         'task': 'Clean TV screen',
         'howTo': 'Dry microfiber only, gentle circular motion'
       },
       {
-        'task': 'Dust nightstand/floating shelf',
-        'howTo': 'Move items to clean underneath'
+        'task': 'Deep dust all surfaces',
+        'howTo': 'Nightstand, floating shelf, bar cart, marble console - move all items to clean under'
       },
       {
-        'task': 'Organize bar cart',
-        'howTo': 'Remove empty cans, wipe shelves, restock neatly'
-      },
-      {
-        'task': 'Dust marble console/vanity table',
-        'howTo': 'Damp cloth on marble, dry immediately, wipe frame'
-      },
-      {
-        'task': 'Wipe bedroom doors',
-        'howTo': 'Both sides, handles, clean smudges at dog height'
+        'task': 'Full baseboards and door wipe',
+        'howTo': 'Wipe all baseboards, both sides of doors, handles, dog-height smudges'
       },
       {
         'task': 'Dust wall art & frames',
         'howTo': 'Gently wipe all visible artwork'
       },
       {
-        'task': 'Check under bed',
-        'howTo': 'Remove trash or items, sweep if accessible'
+        'task': 'Under bed deep clean',
+        'howTo': 'Pull out items, vacuum/sweep under bed area, organize storage'
       },
       {
         'task': 'Wipe baseboards',
         'howTo': 'Focus around door and furniture edges'
       },
       {
-        'task': 'Pet hair patrol',
-        'howTo': 'Lint roll bedding if needed, check furniture'
+        'task': 'Laundry and linens refresh',
+        'howTo': 'Strip bed, wash linens, lint-roll bedding for pet hair'
       },
-      {
-        'task': 'Sweep entire floor',
-        'howTo': 'All corners, under furniture, get all dog hair on tile'
-      },
-      {
-        'task': 'Spot mop if needed',
-        'howTo': 'Address any sticky spots or spills'
-      },
+
     ],
     'Living Room': [
+      // Daily: clear surfaces, quick sweep
+      // Zone day: DEEP CLEAN
       {
         'task': 'Straighten couch pillows',
         'howTo': 'Fluff pillows, fold throw blankets neatly'
       },
       {
-        'task': 'Clear clutter from surfaces',
-        'howTo': 'Remove dishes, cups, random items from all surfaces'
+        'task': 'Deep clean all surfaces',
+        'howTo': 'Island, entry table, side table - deep wipe and organize, not just surface clean'
       },
       {
-        'task': 'Wipe kitchen island/entry table',
-        'howTo': 'Striped wood surface and white tiered table'
+        'task': 'Deep vacuum couch and furniture',
+        'howTo': 'Remove cushions, vacuum under/between, get all crevices, deep pet hair removal'
       },
       {
-        'task': 'Dust tiered side table',
-        'howTo': 'Both levels, gold legs, organize items'
-      },
-      {
-        'task': 'Vacuum couch',
-        'howTo': 'Get cushions, crevices, remove dog hair'
-      },
-      {
-        'task': 'Clean TV screen',
-        'howTo': 'Dry microfiber cloth only'
-      },
-      {
-        'task': 'Wipe TV stand/console',
-        'howTo': 'Under devices, around cords'
+        'task': 'Deep clean entertainment area',
+        'howTo': 'TV screen + stand, organize cords, dust all devices, wipe around equipment'
       },
       {
         'task': 'Clean large mirror',
@@ -244,8 +206,8 @@ class CleaningData {
         'howTo': 'Front door, glass insert, black door surface'
       },
       {
-        'task': 'Wipe baseboards',
-        'howTo': 'Along couch, mirror, and corners'
+        'task': 'Deep clean baseboards and trim',
+        'howTo': 'Wipe all baseboards along couch, mirror, corners - get dog nose prints'
       },
       {
         'task': 'Wipe light switches',
@@ -256,42 +218,44 @@ class CleaningData {
         'howTo': 'Lint roll furniture, check around couch base'
       },
       {
-        'task': 'Sweep/vacuum floor',
-        'howTo': 'Dark tile shows everything - get all corners and under furniture'
-      },
-      {
-        'task': 'Mop floor',
-        'howTo': 'After sweeping, focus on traffic paths'
+        'task': 'Deep sweep and mop floors',
+        'howTo': 'Thorough sweep under furniture and corners, then full mop - dark tile shows everything'
       },
     ],
     'Laundry Room': [
+      // Daily: one load of laundry
+      // Zone day: DEEP CLEAN the room itself
       {
         'task': 'Pick up ALL floor clutter',
         'howTo': 'This is priority #1 - clear the walking path completely'
       },
       {
-        'task': 'Wipe washer/dryer tops',
-        'howTo': 'Remove items first, wipe both surfaces clean'
+        'task': 'Washer and dryer deep clean',
+        'howTo': 'Clean inside drum, run cleaning cycle, wipe rubber seals, clean lint trap thoroughly'
       },
       {
         'task': 'Clean detergent area',
-        'howTo': 'Wipe spills, clean cap and dispensers'
+        'howTo': 'Deep clean spills, sanitize dispensers and bottles'
       },
       {
         'task': 'Wipe window sill & blinds',
         'howTo': 'Dust sill, wipe blinds if dusty'
       },
       {
-        'task': 'Wipe shelf',
-        'howTo': 'Wooden shelf - dust and wipe, organize items on it'
+        'task': 'Organize and deep clean storage',
+        'howTo': 'Wooden shelf - remove all items, deep dust and wipe, reorganize neatly'
       },
       {
         'task': 'Wipe chest freezer top & sides',
         'howTo': 'Full exterior wipe down'
       },
       {
+        'task': 'Catch up on ALL laundry',
+        'howTo': 'Do multiple loads if needed - get completely caught up on wash/dry/fold/put away'
+      },
+      {
         'task': 'Check supplies stock',
-        'howTo': 'Detergent, dryer sheets, stain spray'
+        'howTo': 'Detergent, dryer sheets, stain spray - restock if needed'
       },
       {
         'task': 'Wipe door & frame',
@@ -302,100 +266,91 @@ class CleaningData {
         'howTo': 'White baseboards along both walls'
       },
       {
-        'task': 'Sweep floor thoroughly',
-        'howTo': 'Narrow space - get both sides, all corners'
-      },
-      {
-        'task': 'Mop floor',
-        'howTo': 'After sweeping, full floor mop'
+        'task': 'Deep sweep and mop',
+        'howTo': 'Thorough sweep of narrow space - both walls, all corners, then full mop'
       },
     ],
     'Office': [
+      // Zone day: DEEP CLEAN
       {
         'task': 'Pick up all floor clutter',
-        'howTo': 'Clear the walking path - this is the biggest issue'
+        'howTo': 'Clear the walking path - deep organization, not just surface pick-up'
       },
       {
-        'task': 'Clear desk surface',
-        'howTo': 'Toss trash, organize items, wipe down all desk levels'
+        'task': 'Deep organize desk',
+        'howTo': 'Clear all surfaces, sort papers, organize drawers, wipe all levels thoroughly'
       },
       {
-        'task': 'Dust monitors & electronics',
-        'howTo': 'Microfiber on screens, light wipe on equipment'
+        'task': 'Clean all electronics',
+        'howTo': 'Monitors, keyboard, mouse, equipment - deep clean with proper electronics wipes'
       },
       {
-        'task': 'Organize desk cables',
-        'howTo': 'Bundle cords, secure loose wires'
+        'task': 'Cable management',
+        'howTo': 'Bundle all cords properly, secure loose wires, organize charging stations'
       },
       {
-        'task': 'Disinfect keyboard & mouse',
-        'howTo': 'Electronics-safe wipes'
+        'task': 'Deep clean all furniture',
+        'howTo': 'Vacuum office chair (crevices, wheels), vacuum/spot clean armchair'
       },
       {
-        'task': 'Vacuum/dust office chair',
-        'howTo': 'Fabric chair - get crevices and wheels'
+        'task': 'Windows and mirrors',
+        'howTo': 'Large mirror behind desk, window, dust curtain rod - streak-free clean'
       },
       {
-        'task': 'Wipe armchair',
-        'howTo': 'Grey patterned chair - vacuum or spot clean'
-      },
-      {
-        'task': 'Clean mirror',
-        'howTo': 'Large frameless mirror behind desk'
-      },
-      {
-        'task': 'Wipe window & curtain rod',
-        'howTo': 'Dust curtain rod, wipe window if accessible'
-      },
-      {
-        'task': 'Empty trash',
-        'howTo': 'Clear any trash from floor or desk'
+        'task': 'Empty trash and declutter',
+        'howTo': 'Remove all trash, paper shred if needed, clear unnecessary items'
       },
       {
         'task': 'Wipe baseboards',
-        'howTo': 'Around room perimeter'
+        'howTo': 'Around entire room perimeter'
       },
       {
-        'task': 'Sweep/vacuum floor',
-        'howTo': 'Tile floor - under desk, around chair, all visible areas'
+        'task': 'Deep floor clean',
+        'howTo': 'Thorough sweep/vacuum under desk, around chair, all corners, then full floor clean'
       },
     ],
     'Reset': [
+      // Sunday is for catching up, planning, and preparing for the week
+      // Remember: Daily essentials are ALREADY being done every day!
       {
-        'task': 'Light tidy-up all rooms',
-        'howTo': 'Quick scan of each room, fix anything obvious'
+        'task': 'Quick tidy all rooms',
+        'howTo': 'Walk through each room - quick surface tidy, put away items'
       },
       {
-        'task': 'Catch up missed tasks',
-        'howTo': 'Review the week, knock out anything skipped'
+        'task': 'Catch up any missed zone tasks',
+        'howTo': 'Review the week - did you skip any zone days? Catch up now'
       },
       {
-        'task': 'Final laundry load',
-        'howTo': 'Wash, dry, fold and put away'
+        'task': 'Laundry marathon if needed',
+        'howTo': 'If behind on laundry, do multiple loads today to catch up fully'
       },
       {
-        'task': 'Reset bathroom essentials',
-        'howTo': 'Swap towels, refill TP, restock items'
+        'task': 'Bathroom restock',
+        'howTo': 'Swap towels for fresh ones, refill TP, restock toiletries'
       },
       {
-        'task': 'Quick fridge cleanout',
-        'howTo': 'Toss old leftovers, wipe shelves if needed'
+        'task': 'Fridge deep clean',
+        'howTo': 'Toss old leftovers and expired items, wipe shelves, organize'
       },
       {
-        'task': 'Take out all trash',
-        'howTo': 'Every room - fresh start for the week'
+        'task': 'Take out ALL trash',
+        'howTo': 'Every room - empty all bins for fresh start Monday'
       },
       {
-        'task': 'Meal prep check',
-        'howTo': 'Review upcoming week schedule and meals'
+        'task': 'Meal prep and plan',
+        'howTo': 'Review upcoming week schedule, plan meals, prep what you can'
       },
       {
-        'task': 'Restock pet supplies',
-        'howTo': 'Check dog food, treats, prep bowls for week'
+        'task': 'Pet supply restock',
+        'howTo': 'Check dog food, treats, pee pads, prep bowls and stations for week'
       },
       {
         'task': 'Review planner',
-        'howTo': 'Check upcoming appointments and tasks'
+        'howTo': 'Check upcoming appointments, tasks, and priorities for the week'
+      },
+      {
+        'task': 'Self-care check',
+        'howTo': 'How are you feeling? What do you need this week? Plan accordingly'
       },
     ],
   };

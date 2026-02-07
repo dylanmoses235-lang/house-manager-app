@@ -1,7 +1,7 @@
 class DailyTasksData {
-  // Daily recurring tasks that need to be done every day to prevent pileup
-  // These are the critical tasks that cause problems if skipped
-  static List<Map<String, String>> dailyRecurringTasks = [
+  // DAILY ESSENTIAL TASKS - Do EVERY DAY to prevent pileup!
+  // These are non-negotiable maintenance tasks
+  static List<Map<String, String>> dailyEssentialTasks = [
     {
       'id': 'dishes',
       'name': 'Wash All Dishes',
@@ -9,6 +9,7 @@ class DailyTasksData {
       'emoji': '🍽️',
       'zone': 'Kitchen',
       'priority': 'high',
+      'estimatedMinutes': '15',
     },
     {
       'id': 'kitchen_counter',
@@ -17,22 +18,7 @@ class DailyTasksData {
       'emoji': '🧽',
       'zone': 'Kitchen',
       'priority': 'high',
-    },
-    {
-      'id': 'sink',
-      'name': 'Clean Kitchen Sink',
-      'description': 'Scrub basin, shine faucet, wipe around edges',
-      'emoji': '💧',
-      'zone': 'Kitchen',
-      'priority': 'medium',
-    },
-    {
-      'id': 'stovetop',
-      'name': 'Wipe Stovetop',
-      'description': 'Quick wipe of burners and knobs after cooking',
-      'emoji': '🔥',
-      'zone': 'Kitchen',
-      'priority': 'medium',
+      'estimatedMinutes': '10',
     },
     {
       'id': 'dog_bowls',
@@ -41,38 +27,84 @@ class DailyTasksData {
       'emoji': '🐕',
       'zone': 'Kitchen',
       'priority': 'high',
+      'estimatedMinutes': '5',
     },
     {
-      'id': 'trash',
-      'name': 'Take Out Trash',
-      'description': 'Empty kitchen trash, replace bag if needed',
+      'id': 'trash_check',
+      'name': 'Check/Empty Trash',
+      'description': 'Empty kitchen trash if full or smelly, replace bag',
       'emoji': '🗑️',
       'zone': 'Kitchen',
       'priority': 'high',
+      'estimatedMinutes': '5',
     },
     {
       'id': 'floor_sweep',
-      'name': 'Sweep Kitchen Floor',
-      'description': 'Sweep kitchen floor - get crumbs, dog hair, and corners',
+      'name': 'Quick Floor Sweep',
+      'description': 'Sweep main traffic areas - kitchen and living room for dog hair',
       'emoji': '🧹',
-      'zone': 'Kitchen',
-      'priority': 'medium',
+      'zone': 'Multiple',
+      'priority': 'high',
+      'estimatedMinutes': '10',
     },
     {
       'id': 'bathroom_quick',
       'name': 'Bathroom Quick Clean',
-      'description': 'Wipe sink, counter, and toilet seat - 5 min tidy',
+      'description': 'Wipe sink, counter, and toilet seat - 5 min maintenance',
       'emoji': '🚽',
       'zone': 'Bathroom',
       'priority': 'high',
+      'estimatedMinutes': '5',
+    },
+    {
+      'id': 'laundry_load',
+      'name': 'One Load of Laundry',
+      'description': 'Wash, dry, fold, and put away one load',
+      'emoji': '👔',
+      'zone': 'Laundry Room',
+      'priority': 'high',
+      'estimatedMinutes': '20',
+    },
+  ];
+
+  // ROTATING TASKS - These happen less frequently
+  // Do these 2-3x per week or as needed
+  static List<Map<String, String>> dailyRecurringTasks = [
+    {
+      'id': 'sink',
+      'name': 'Deep Clean Kitchen Sink',
+      'description': 'Scrub basin thoroughly, shine faucet, clean around edges and drain',
+      'emoji': '💧',
+      'zone': 'Kitchen',
+      'priority': 'medium',
+      'estimatedMinutes': '10',
+    },
+    {
+      'id': 'stovetop',
+      'name': 'Deep Clean Stovetop',
+      'description': 'Remove grates, degrease burners and knobs thoroughly',
+      'emoji': '🔥',
+      'zone': 'Kitchen',
+      'priority': 'medium',
+      'estimatedMinutes': '15',
+    },
+    {
+      'id': 'microwave',
+      'name': 'Clean Microwave',
+      'description': 'Clean inside and outside, wipe buttons and door',
+      'emoji': '📱',
+      'zone': 'Kitchen',
+      'priority': 'low',
+      'estimatedMinutes': '10',
     },
     {
       'id': 'bathroom_floor',
-      'name': 'Quick Bathroom Sweep',
-      'description': 'Sweep up dog hair and dust from bathroom floor',
+      'name': 'Sweep/Mop Bathroom',
+      'description': 'Sweep and mop bathroom floor thoroughly',
       'emoji': '🧹',
       'zone': 'Bathroom',
-      'priority': 'low',
+      'priority': 'medium',
+      'estimatedMinutes': '10',
     },
     {
       'id': 'bed_make',
@@ -81,30 +113,34 @@ class DailyTasksData {
       'emoji': '🛏️',
       'zone': 'Bedroom',
       'priority': 'medium',
+      'estimatedMinutes': '5',
     },
     {
       'id': 'bedroom_clutter',
       'name': 'Pick Up Bedroom Floor',
-      'description': 'Quick pickup of clothes, items on floor',
+      'description': 'Quick pickup of clothes and items on floor',
       'emoji': '👕',
       'zone': 'Bedroom',
       'priority': 'medium',
+      'estimatedMinutes': '10',
     },
     {
       'id': 'living_room_clutter',
-      'name': 'Clear Living Room Surfaces',
+      'name': 'Clear Living Room',
       'description': 'Remove dishes, cups, random items from couch and tables',
       'emoji': '🛋️',
       'zone': 'Living Room',
       'priority': 'medium',
+      'estimatedMinutes': '10',
     },
     {
-      'id': 'laundry',
-      'name': 'One Load of Laundry',
-      'description': 'Wash, dry, fold, and put away one load',
-      'emoji': '👔',
-      'zone': 'Laundry Room',
-      'priority': 'medium',
+      'id': 'vacuum_couch',
+      'name': 'Vacuum Couch',
+      'description': 'Remove dog hair and debris from couch cushions',
+      'emoji': '🛋️',
+      'zone': 'Living Room',
+      'priority': 'low',
+      'estimatedMinutes': '15',
     },
   ];
 
