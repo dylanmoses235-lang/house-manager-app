@@ -83,11 +83,11 @@ dependencies:
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.2
   
-  # ML Kit for receipt scanning
-  google_mlkit_text_recognition: ^0.14.1
+  # ML Kit for receipt scanning (temporarily disabled due to dependency conflicts)
+  # google_mlkit_text_recognition: ^0.14.1
   
-  # Barcode scanning for products
-  mobile_scanner: ^5.2.3
+  # Barcode scanning for products (temporarily disabled due to dependency conflicts)
+  # mobile_scanner: ^5.2.3
   
   # Camera for visual progress
   camera: ^0.11.0+2
@@ -118,7 +118,7 @@ dev_dependencies:
   # Build runner for code generation
   build_runner: ^2.4.13
   hive_generator: ^2.0.1
-  json_serializable: ^6.9.2
+  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
