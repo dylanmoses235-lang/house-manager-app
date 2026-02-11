@@ -119,7 +119,7 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget _getScreen(int index) {
     switch (index) {
       case 0:
-        return DashboardScreen(onNavigate: _navigateToTab);
+        return const DailyTasksScreen();
       case 1:
         return const ZoneScreen();
       case 2:
@@ -129,7 +129,7 @@ class _MainNavigationState extends State<MainNavigation> {
       case 4:
         return const StatisticsScreen();
       default:
-        return DashboardScreen(onNavigate: _navigateToTab);
+        return const DailyTasksScreen();
     }
   }
 

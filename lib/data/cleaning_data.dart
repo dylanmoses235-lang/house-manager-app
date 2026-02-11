@@ -131,14 +131,22 @@ class CleaningData {
     ],
     'Bedroom': [
       // Daily: make bed, pick up floor clutter
-      // Zone day: DEEP CLEAN
+      // Zone day: DEEP CLEAN + boyfriend's mess
+      {
+        'task': 'Collect boyfriend\'s scattered items',
+        'howTo': 'Pick up change, clothes, shoes, random items - organize in designated spot'
+      },
+      {
+        'task': 'Pick up boyfriend\'s clothes',
+        'howTo': 'Gather scattered clothes from floor, chair, bed - put away or in laundry'
+      },
       {
         'task': 'Make bed fully',
-        'howTo': 'Straighten sheets, pillows, blankets - remove any clutter from bed'
+        'howTo': 'Straighten sheets, pillows, blankets - remove any clutter from bed, lint-roll for dog hair'
       },
       {
         'task': 'Deep floor cleaning',
-        'howTo': 'Clear all floor items, sweep thoroughly including under furniture, spot mop'
+        'howTo': 'Clear all floor items, sweep thoroughly including under furniture and corners, spot mop'
       },
       {
         'task': 'Deep clean and organize dresser',
@@ -162,32 +170,47 @@ class CleaningData {
       },
       {
         'task': 'Under bed deep clean',
-        'howTo': 'Pull out items, vacuum/sweep under bed area, organize storage'
+        'howTo': 'Pull out items, vacuum/sweep under bed area, organize storage, get lost dog toys'
       },
       {
-        'task': 'Wipe baseboards',
-        'howTo': 'Focus around door and furniture edges'
+        'task': 'Remove dog hair from bedding',
+        'howTo': 'Lint roll comforter, pillows, sheets - full retriever hair removal'
       },
       {
         'task': 'Laundry and linens refresh',
-        'howTo': 'Strip bed, wash linens, lint-roll bedding for pet hair'
+        'howTo': 'Strip bed, wash linens, handle boyfriend\'s laundry pile'
       },
-
     ],
     'Living Room': [
-      // Daily: clear surfaces, quick sweep
-      // Zone day: DEEP CLEAN
+      // BIGGEST MESS ZONE! Daily: clear surfaces, quick sweep
+      // Zone day: DEEP CLEAN retriever hair + boyfriend's stuff
+      {
+        'task': 'Collect boyfriend\'s scattered items',
+        'howTo': 'Gather change, clothes, random items from all surfaces - put in designated spot'
+      },
+      {
+        'task': 'Pick up ALL dog toys',
+        'howTo': 'Gather scattered toys from floor, couch, under furniture - put in toy basket'
+      },
       {
         'task': 'Straighten couch pillows',
-        'howTo': 'Fluff pillows, fold throw blankets neatly'
+        'howTo': 'Fluff pillows, fold throw blankets neatly, remove any hidden dog toys'
+      },
+      {
+        'task': 'DEEP vacuum couch - retriever hair',
+        'howTo': 'Remove ALL cushions, vacuum under/between, use pet hair attachment, get all crevices - this is KEY!'
+      },
+      {
+        'task': 'Lint roll ALL furniture',
+        'howTo': 'Couch, chairs, throw blankets - full retriever hair removal session'
+      },
+      {
+        'task': 'Wash dog blankets/beds',
+        'howTo': 'All dog bedding that lives in living room - hot wash cycle'
       },
       {
         'task': 'Deep clean all surfaces',
         'howTo': 'Island, entry table, side table - deep wipe and organize, not just surface clean'
-      },
-      {
-        'task': 'Deep vacuum couch and furniture',
-        'howTo': 'Remove cushions, vacuum under/between, get all crevices, deep pet hair removal'
       },
       {
         'task': 'Deep clean entertainment area',
@@ -195,7 +218,11 @@ class CleaningData {
       },
       {
         'task': 'Clean large mirror',
-        'howTo': 'Full edge-to-edge wipe, no streaks'
+        'howTo': 'Full edge-to-edge wipe, no streaks, get dog nose prints at bottom'
+      },
+      {
+        'task': 'Clean windows - nose prints',
+        'howTo': 'Remove dog nose prints from all windows and glass doors'
       },
       {
         'task': 'Dust wall art & frames',
@@ -203,23 +230,23 @@ class CleaningData {
       },
       {
         'task': 'Wipe door & glass panel',
-        'howTo': 'Front door, glass insert, black door surface'
+        'howTo': 'Front door, glass insert, black door surface - focus on dog-height smudges'
       },
       {
         'task': 'Deep clean baseboards and trim',
-        'howTo': 'Wipe all baseboards along couch, mirror, corners - get dog nose prints'
+        'howTo': 'Wipe all baseboards along couch, mirror, corners - GET ALL dog nose prints and drool'
       },
       {
         'task': 'Wipe light switches',
         'howTo': 'Entry switches and outlets'
       },
       {
-        'task': 'Pet hair patrol',
-        'howTo': 'Lint roll furniture, check around couch base'
+        'task': 'Vacuum under ALL furniture',
+        'howTo': 'Move couch if possible, get hidden dog toys and hair tumbleweeds'
       },
       {
         'task': 'Deep sweep and mop floors',
-        'howTo': 'Thorough sweep under furniture and corners, then full mop - dark tile shows everything'
+        'howTo': 'THOROUGH sweep for retriever hair - corners, under furniture, everywhere! Then full mop - dark tile shows everything'
       },
     ],
     'Laundry Room': [
