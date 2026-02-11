@@ -504,7 +504,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       backgroundColor: urgencyColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      sh                      shape: RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),

@@ -43,7 +43,11 @@ class _ZoneScreenState extends State<ZoneScreen> {
       
       for (String zone in availableZones) {
         final zoneTasks = await HouseService.getZoneTasks(zone);
-        final zoneCompletions = HouseService.getAllZoneTaskCompletions(zone);
+        // Get all completions for this zone
+        Map<String, bool> zoneCompletions = {};
+        for (int i = 0; i < (await HouseService.getZoneTasks(zone)).length; i++) {
+          zoneCompletions['$i'] = HouseService.getZoneTaskCompletion(zone, i);
+        }
         
         // Add zone info and color to each task
         for (int i = 0; i < zoneTasks.length; i++) {
@@ -68,7 +72,11 @@ class _ZoneScreenState extends State<ZoneScreen> {
       tasks = zoneTasks.map((task) => Map<String, dynamic>.from(task)).toList();
       
       // Load completion state from persistence
-      taskCompletion = HouseService.getAllZoneTaskCompletions(selectedZone);
+      // Get all completions for this zone
+      taskCompletion = {};
+      for (int i = 0; i < zoneTasks.length; i++) {
+        taskCompletion['$i'] = HouseService.getZoneTaskCompletion(selectedZone, i);
+      }
     }
   }
 
@@ -190,7 +198,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
             ),
             child: Column(
               children: [
-                if (_isMixedMode) ..[
+                if (_isMixedMode) ...[
                   const Icon(Icons.apps, size: 32),
                   const SizedBox(height: 8),
                   Text(
@@ -201,7 +209,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ),
-                ] else ..[
+                ] else ...[
                   Text(
                     selectedZone,
                     style: TextStyle(
@@ -304,8 +312,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
                             title: Row(
                               children: [
                                 // Zone badge (only in mixed mode)
-                                if (_isMixedMode && task['zone'] != null) ..[
-                                  Container(
+                                if (_isMixedMode && task['zone'] != null) ...[\n                                  Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 4,
