@@ -312,7 +312,8 @@ class _ZoneScreenState extends State<ZoneScreen> {
                             title: Row(
                               children: [
                                 // Zone badge (only in mixed mode)
-                                if (_isMixedMode && task['zone'] != null) ...[\n                                  Container(
+                                if (_isMixedMode && task['zone'] != null) ...[
+                                  Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 4,
