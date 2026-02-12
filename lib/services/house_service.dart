@@ -394,17 +394,18 @@ class HouseService {
   static Future<void> _initializeDailyRecurringTasks() async {
     final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
     
-    // Only initialize if empty
-    if (box.isEmpty) {
-      for (var taskData in DailyTasksData.dailyRecurringTasks) {
-        final task = DailyRecurringTask(
-          id: taskData['id']!,
-          name: taskData['name']!,
-          description: taskData['description']!,
-          emoji: taskData['emoji']!,
-        );
-        await box.add(task);
-      }
+    // ALWAYS reinitialize to get latest tasks (for updates)
+    await box.clear();
+    
+    // Load DAILY ESSENTIAL TASKS (dishes, laundry, dogs, boyfriend cleanup)
+    for (var taskData in DailyTasksData.dailyEssentialTasks) {
+      final task = DailyRecurringTask(
+        id: taskData['id']!,
+        name: taskData['name']!,
+        description: taskData['description']!,
+        emoji: taskData['emoji']!,
+      );
+      await box.add(task);
     }
   }
 
