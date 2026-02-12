@@ -51,12 +51,12 @@ class HouseService {
   static Future<void> _initializeData() async {
     final settings = Hive.box(settingsBox);
     
+    // ALWAYS reinitialize daily tasks to get updates
+    await _initializeDailyRecurringTasks();
+    
     if (settings.get('initialized') != true) {
       // Initialize declutter challenge
       await _initializeDeclutter();
-      
-      // Initialize daily recurring tasks
-      await _initializeDailyRecurringTasks();
       
       settings.put('initialized', true);
       settings.put('challengeStartDate', DateTime.now().toIso8601String());
