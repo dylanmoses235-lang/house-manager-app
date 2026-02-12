@@ -17,6 +17,7 @@ class HouseService {
   static const String declutterBox = 'declutter';
   static const String settingsBox = 'settings';
   static const String dailyTaskCompletionBox = 'daily_task_completion';
+  static const String scheduleTaskCompletionBox = 'schedule_task_completion';
   static const String statisticsBox = 'statistics';
   static const String suppliesBox = 'supplies';
   static const String taskNotesBox = 'task_notes';
@@ -42,6 +43,7 @@ class HouseService {
     await Hive.openBox<DailyRecurringTask>(dailyRecurringTasksBox);
     await Hive.openBox(settingsBox);
     await Hive.openBox(dailyTaskCompletionBox);
+    await Hive.openBox(scheduleTaskCompletionBox);
     await Hive.openBox(statisticsBox);
 
     // Initialize data if first time
