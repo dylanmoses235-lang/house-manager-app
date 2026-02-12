@@ -157,8 +157,20 @@ class CleaningData {
         'howTo': 'Dry microfiber only, gentle circular motion'
       },
       {
+        'task': 'Clean side tables',
+        'howTo': 'Wipe both side tables - top surfaces, legs, organize items on top'
+      },
+      {
+        'task': 'Clean marble table top',
+        'howTo': 'Deep clean entire marble table top - remove all items, wipe with appropriate marble cleaner, polish'
+      },
+      {
+        'task': 'Clean marble table bottom shelf',
+        'howTo': 'Wipe marble table bottom shelf - remove items, deep dust and clean, reorganize neatly'
+      },
+      {
         'task': 'Deep dust all surfaces',
-        'howTo': 'Nightstand, floating shelf, bar cart, marble console - move all items to clean under'
+        'howTo': 'Nightstand, floating shelf, bar cart, dresser top - move all items to clean under'
       },
       {
         'task': 'Full baseboards and door wipe',

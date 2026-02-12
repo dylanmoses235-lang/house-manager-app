@@ -225,6 +225,40 @@ class HouseService {
     settings.put('challengeStartDate', DateTime.now().toIso8601String());
   }
 
+  // Reset all daily recurring tasks (clear completion data)
+  static Future<void> resetDailyRecurringTasks() async {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    
+    // Reset all tasks to uncompleted state
+    for (var task in box.values) {
+      task.lastCompleted = null;
+      task.isCompletedToday = false;
+      task.accumulationDays = 0;
+      task.totalCompletions = 0;
+      await task.save();
+    }
+  }
+
+  // Reset all progress (daily tasks, zone tasks, schedule tasks, statistics)
+  static Future<void> resetAllProgress() async {
+    // Reset daily recurring tasks
+    await resetDailyRecurringTasks();
+    
+    // Reset declutter challenge
+    await resetChallenge();
+    
+    // Clear all task completion boxes
+    final dailyCompletionBox = Hive.box(dailyTaskCompletionBox);
+    await dailyCompletionBox.clear();
+    
+    final scheduleCompletionBox = Hive.box(scheduleTaskCompletionBox);
+    await scheduleCompletionBox.clear();
+    
+    // Clear statistics
+    final statsBox = Hive.box(statisticsBox);
+    await statsBox.clear();
+  }
+
   // Zone task completion persistence
   static String _getZoneTaskKey(String zone, int taskIndex, DateTime date) {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
