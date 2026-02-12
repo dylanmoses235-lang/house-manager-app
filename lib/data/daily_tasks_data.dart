@@ -120,6 +120,51 @@ class DailyTasksData {
       'priority': 'medium',
       'estimatedMinutes': '5',
     },
+    {
+      'id': 'mail_check',
+      'name': 'Sort Mail & Packages',
+      'description': 'Check mailbox, bring in packages, sort immediately - trash junk, file important',
+      'emoji': '📬',
+      'zone': 'Entry',
+      'priority': 'medium',
+      'estimatedMinutes': '3',
+    },
+    {
+      'id': 'entry_wipe',
+      'name': 'Wipe Dog Paw Prints',
+      'description': 'Quick wipe entry area, door glass, and common paw-print zones',
+      'emoji': '🐾',
+      'zone': 'Entry',
+      'priority': 'medium',
+      'estimatedMinutes': '3',
+    },
+    {
+      'id': 'unload_dishwasher',
+      'name': 'Unload Dishwasher',
+      'description': 'Put away all clean dishes - makes loading easier all day',
+      'emoji': '🍽️',
+      'zone': 'Kitchen',
+      'priority': 'high',
+      'estimatedMinutes': '5',
+    },
+    {
+      'id': 'bedroom_reset',
+      'name': 'Bedroom 5-Min Reset',
+      'description': 'Before bed - clothes to hamper, surfaces clear, ready for tomorrow',
+      'emoji': '🛏️',
+      'zone': 'Bedroom',
+      'priority': 'medium',
+      'estimatedMinutes': '5',
+    },
+    {
+      'id': 'check_supplies',
+      'name': 'Check Pet & House Supplies',
+      'description': 'Quick check: dog food, pee pads, trash bags, TP - add to shopping list if low',
+      'emoji': '📋',
+      'zone': 'Multiple',
+      'priority': 'low',
+      'estimatedMinutes': '2',
+    },
   ];
 
   // ROTATING TASKS - These happen less frequently
@@ -279,6 +324,34 @@ class DailyTasksData {
         if (days == 1) return 'Needs a quick wipe';
         if (days >= 2) return 'Getting messy in here!';
         return 'Bathroom needs attention';
+      
+      case 'mail_check':
+        if (days == 0) return 'Mail sorted!';
+        if (days == 1) return 'Mail piling up';
+        if (days >= 3) return 'Mail mountain! 📬';
+        return 'Need to sort mail';
+      
+      case 'entry_wipe':
+        if (days == 0) return 'Entry is clean!';
+        if (days == 1) return 'Some paw prints visible';
+        if (days >= 2) return 'Muddy paw prints everywhere! 🐾';
+        return 'Paw prints need cleaning';
+      
+      case 'unload_dishwasher':
+        if (days == 0) return 'Dishwasher unloaded!';
+        if (days >= 1) return 'Clean dishes waiting!';
+        return 'Need to unload';
+      
+      case 'bedroom_reset':
+        if (days == 0) return 'Bedroom is tidy!';
+        if (days == 1) return 'Some clutter building';
+        if (days >= 2) return 'Bedroom chaos! 😬';
+        return 'Bedroom needs reset';
+      
+      case 'check_supplies':
+        if (days == 0) return 'Supplies checked!';
+        if (days >= 2) return 'Check supplies!';
+        return 'Time to check supplies';
       
       default:
         return days == 0 ? 'Done!' : '$days days behind';
