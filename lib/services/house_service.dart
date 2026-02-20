@@ -17,6 +17,7 @@ class HouseService {
   static const String declutterBox = 'declutter';
   static const String settingsBox = 'settings';
   static const String dailyTaskCompletionBox = 'daily_task_completion';
+  static const String scheduleTaskCompletionBox = 'schedule_task_completion';
   static const String statisticsBox = 'statistics';
   static const String suppliesBox = 'supplies';
   static const String taskNotesBox = 'task_notes';
@@ -42,6 +43,7 @@ class HouseService {
     await Hive.openBox<DailyRecurringTask>(dailyRecurringTasksBox);
     await Hive.openBox(settingsBox);
     await Hive.openBox(dailyTaskCompletionBox);
+    await Hive.openBox(scheduleTaskCompletionBox);
     await Hive.openBox(statisticsBox);
 
     // Initialize data if first time
@@ -51,12 +53,12 @@ class HouseService {
   static Future<void> _initializeData() async {
     final settings = Hive.box(settingsBox);
     
+    // ALWAYS reinitialize daily tasks to get updates
+    await _initializeDailyRecurringTasks();
+    
     if (settings.get('initialized') != true) {
       // Initialize declutter challenge
       await _initializeDeclutter();
-      
-      // Initialize daily recurring tasks
-      await _initializeDailyRecurringTasks();
       
       settings.put('initialized', true);
       settings.put('challengeStartDate', DateTime.now().toIso8601String());
@@ -223,6 +225,40 @@ class HouseService {
     
     // Reset start date
     settings.put('challengeStartDate', DateTime.now().toIso8601String());
+  }
+
+  // Reset all daily recurring tasks (clear completion data)
+  static Future<void> resetDailyRecurringTasks() async {
+    final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
+    
+    // Reset all tasks to uncompleted state
+    for (var task in box.values) {
+      task.lastCompleted = null;
+      task.isCompletedToday = false;
+      task.accumulationDays = 0;
+      task.totalCompletions = 0;
+      await task.save();
+    }
+  }
+
+  // Reset all progress (daily tasks, zone tasks, schedule tasks, statistics)
+  static Future<void> resetAllProgress() async {
+    // Reset daily recurring tasks
+    await resetDailyRecurringTasks();
+    
+    // Reset declutter challenge
+    await resetChallenge();
+    
+    // Clear all task completion boxes
+    final dailyCompletionBox = Hive.box(dailyTaskCompletionBox);
+    await dailyCompletionBox.clear();
+    
+    final scheduleCompletionBox = Hive.box(scheduleTaskCompletionBox);
+    await scheduleCompletionBox.clear();
+    
+    // Clear statistics
+    final statsBox = Hive.box(statisticsBox);
+    await statsBox.clear();
   }
 
   // Zone task completion persistence
@@ -394,17 +430,18 @@ class HouseService {
   static Future<void> _initializeDailyRecurringTasks() async {
     final box = Hive.box<DailyRecurringTask>(dailyRecurringTasksBox);
     
-    // Only initialize if empty
-    if (box.isEmpty) {
-      for (var taskData in DailyTasksData.dailyRecurringTasks) {
-        final task = DailyRecurringTask(
-          id: taskData['id']!,
-          name: taskData['name']!,
-          description: taskData['description']!,
-          emoji: taskData['emoji']!,
-        );
-        await box.add(task);
-      }
+    // ALWAYS reinitialize to get latest tasks (for updates)
+    await box.clear();
+    
+    // Load DAILY ESSENTIAL TASKS (dishes, laundry, dogs, boyfriend cleanup)
+    for (var taskData in DailyTasksData.dailyEssentialTasks) {
+      final task = DailyRecurringTask(
+        id: taskData['id']!,
+        name: taskData['name']!,
+        description: taskData['description']!,
+        emoji: taskData['emoji']!,
+      );
+      await box.add(task);
     }
   }
 

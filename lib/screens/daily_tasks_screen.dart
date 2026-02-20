@@ -75,7 +75,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
   IconData _getUrgencyIcon(String urgencyLevel) {
     switch (urgencyLevel) {
       case 'good':
-        return Icons.check_circle;
+        return Icons.check_circle_outline; // Changed: outline instead of filled
       case 'warning':
         return Icons.warning_amber;
       case 'urgent':

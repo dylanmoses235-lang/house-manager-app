@@ -517,15 +517,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           FilledButton(
             onPressed: () async {
-              // Reset all data
-              await HouseService.resetChallenge();
-              // Could add more comprehensive reset logic here
+              // Reset all data - daily tasks, zone tasks, statistics, and declutter challenge
+              await HouseService.resetAllProgress();
               
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('All progress has been reset'),
+                    content: Text('All progress has been reset. Daily tasks will show as uncompleted.'),
                     duration: Duration(seconds: 3),
                   ),
                 );
