@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 import '../services/house_service.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -384,126 +383,240 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     int streak,
     int declutterProgress,
   ) {
+    final zoneStats = HouseService.getTaskCompletionByZone();
+    final totalZonesCleaned = zoneStats.length;
+
     final achievements = [
+      // ── Task milestones ──
       {
         'icon': '🌟',
         'title': 'First Task',
         'description': 'Complete your first task',
         'unlocked': totalTasks >= 1,
+        'category': 'Tasks',
       },
       {
         'icon': '💪',
         'title': '10 Tasks',
         'description': 'Complete 10 tasks',
         'unlocked': totalTasks >= 10,
+        'category': 'Tasks',
       },
       {
         'icon': '🚀',
         'title': '50 Tasks',
         'description': 'Complete 50 tasks',
         'unlocked': totalTasks >= 50,
+        'category': 'Tasks',
       },
       {
         'icon': '👑',
         'title': '100 Tasks',
         'description': 'Complete 100 tasks',
         'unlocked': totalTasks >= 100,
+        'category': 'Tasks',
       },
       {
+        'icon': '💎',
+        'title': 'Task Legend',
+        'description': 'Complete 250 tasks',
+        'unlocked': totalTasks >= 250,
+        'category': 'Tasks',
+      },
+      // ── Streak milestones ──
+      {
         'icon': '🔥',
-        'title': '3 Day Streak',
+        'title': '3-Day Streak',
         'description': 'Maintain a 3-day streak',
         'unlocked': streak >= 3,
+        'category': 'Streak',
       },
       {
         'icon': '⚡',
         'title': 'Week Warrior',
         'description': 'Maintain a 7-day streak',
         'unlocked': streak >= 7,
+        'category': 'Streak',
       },
+      {
+        'icon': '🌙',
+        'title': 'Two Week Run',
+        'description': 'Maintain a 14-day streak',
+        'unlocked': streak >= 14,
+        'category': 'Streak',
+      },
+      {
+        'icon': '☀️',
+        'title': 'Month Master',
+        'description': 'Maintain a 30-day streak',
+        'unlocked': streak >= 30,
+        'category': 'Streak',
+      },
+      // ── Zone milestones ──
+      {
+        'icon': '🏠',
+        'title': 'Zone Explorer',
+        'description': 'Clean tasks in 3 different zones',
+        'unlocked': totalZonesCleaned >= 3,
+        'category': 'Zones',
+      },
+      {
+        'icon': '🗺️',
+        'title': 'Full House',
+        'description': 'Complete tasks in all 7 zones',
+        'unlocked': totalZonesCleaned >= 7,
+        'category': 'Zones',
+      },
+      // ── Declutter milestones ──
       {
         'icon': '📦',
         'title': 'Declutter Starter',
         'description': 'Complete 10 declutter days',
         'unlocked': declutterProgress >= 10,
+        'category': 'Declutter',
+      },
+      {
+        'icon': '🧹',
+        'title': 'Halfway There',
+        'description': 'Complete 15 declutter days',
+        'unlocked': declutterProgress >= 15,
+        'category': 'Declutter',
       },
       {
         'icon': '🎯',
         'title': 'Declutter Master',
         'description': 'Complete all 30 declutter days',
         'unlocked': declutterProgress >= 30,
+        'category': 'Declutter',
       },
     ];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: achievements.map((achievement) {
-            final isUnlocked = achievement['unlocked'] as bool;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isUnlocked
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
+    final unlockedCount = achievements.where((a) => a['unlocked'] as bool).length;
+    final totalCount = achievements.length;
+
+    // Group by category
+    final categories = ['Tasks', 'Streak', 'Zones', 'Declutter'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Unlocked summary badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🏆', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                '$unlockedCount / $totalCount unlocked',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
               ),
-              child: Row(
-                children: [
-                  Opacity(
-                    opacity: isUnlocked ? 1.0 : 0.3,
-                    child: Text(
-                      achievement['icon'] as String,
-                      style: const TextStyle(
-                        fontSize: 32,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          achievement['title'] as String,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: isUnlocked
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                : Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        Text(
-                          achievement['description'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isUnlocked
-                                ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7)
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isUnlocked)
-                    Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).colorScheme.primary,
-                    )
-                  else
-                    Icon(
-                      Icons.lock_outline,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                ],
-              ),
-            );
-          }).toList(),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 16),
+        // Achievements grouped by category
+        ...categories.map((category) {
+          final categoryAchievements = achievements
+              .where((a) => a['category'] == category)
+              .toList();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  category,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.outline,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: categoryAchievements.map((achievement) {
+                      final isUnlocked = achievement['unlocked'] as bool;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isUnlocked
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Opacity(
+                              opacity: isUnlocked ? 1.0 : 0.3,
+                              child: Text(
+                                achievement['icon'] as String,
+                                style: const TextStyle(fontSize: 28),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    achievement['title'] as String,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: isUnlocked
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                                          : Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  Text(
+                                    achievement['description'] as String,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isUnlocked
+                                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.7)
+                                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isUnlocked)
+                              Icon(
+                                Icons.check_circle,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            else
+                              Icon(
+                                Icons.lock_outline,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ],
     );
   }
 

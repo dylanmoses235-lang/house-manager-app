@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,11 +15,17 @@ class NotificationService {
   static Future<void> initialize() async {
     if (_isInitialized) return;
 
+    // Skip notifications on web
+    if (kIsWeb) {
+      _isInitialized = true;
+      return;
+    }
+
     // Initialize timezone data
     tz.initializeTimeZones();
     
-    // iOS specific initialization settings
-    const DarwinInitializationSettings initializationSettingsIOS =
+    // iOS/macOS initialization settings
+    const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -32,7 +39,8 @@ class NotificationService {
     const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+      iOS: initializationSettingsDarwin,
+      macOS: initializationSettingsDarwin,
     );
 
     await _notifications.initialize(
@@ -49,10 +57,22 @@ class NotificationService {
   }
 
   static Future<bool> requestPermissions() async {
+    if (kIsWeb) return false;
+
     if (Platform.isIOS) {
       final bool? result = await _notifications
           .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+      return result ?? false;
+    } else if (Platform.isMacOS) {
+      final bool? result = await _notifications
+          .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
             alert: true,
             badge: true,
@@ -93,8 +113,8 @@ class NotificationService {
       iOS: iOSDetails,
     );
 
-    // Get today's zone
-    final todayZone = HouseService.getTodayZone();
+    // Get today's zone (properly awaited)
+    final todayZone = await HouseService.getTodayZone();
 
     // Schedule for the specified time
     final now = tz.TZDateTime.now(tz.local);
@@ -112,10 +132,13 @@ class NotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
+    // Cancel any previous daily zone reminder before scheduling new one
+    await cancelNotification(0);
+
     await _notifications.zonedSchedule(
       0, // notification id
       '🏠 Time to Clean!',
-      'Today\'s zone: $todayZone',
+      'Today\'s zone: $todayZone. Let\'s go!',
       scheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -456,6 +479,9 @@ class NotificationService {
 
   // Setup all notifications based on settings
   static Future<void> setupNotifications() async {
+    // Notifications not supported on web
+    if (kIsWeb) return;
+
     final prefs = await SharedPreferences.getInstance();
     final notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     final dailyReminders = prefs.getBool('daily_reminders') ?? true;

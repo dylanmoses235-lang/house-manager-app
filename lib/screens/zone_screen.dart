@@ -18,7 +18,8 @@ class _ZoneScreenState extends State<ZoneScreen> {
   late Map<String, bool> taskCompletion;
   List<String> availableZones = [];
   bool _isLoading = true;
-  bool _isMixedMode = false; // New: Mixed Zones Mode toggle
+  bool _isMixedMode = false; // Mixed Zones Mode toggle
+  DateTime? _lastCleaned; // Last cleaned date for current zone
 
   @override
   void initState() {
@@ -30,42 +31,65 @@ class _ZoneScreenState extends State<ZoneScreen> {
     selectedZone = await HouseService.getTodayZone();
     availableZones = await HouseService.getAllZones();
     await _loadTasks();
+    await _loadLastCleaned();
     setState(() {
       _isLoading = false;
     });
   }
 
+  Future<void> _loadLastCleaned() async {
+    final date = await HouseService.getZoneLastCleanedAsync(selectedZone);
+    setState(() {
+      _lastCleaned = date;
+    });
+  }
+
   Future<void> _loadTasks() async {
     if (_isMixedMode) {
-      // Load ALL tasks from ALL zones
-      List<Map<String, dynamic>> allTasks = [];
+      // Load ALL tasks from ALL zones with TRUE INTERLEAVING
+      // Round-robin: 1st from zone1, 1st from zone2, 1st from zone3, 2nd from zone1, etc.
+      
+      // First, load all zone tasks into a map
+      Map<String, List<Map<String, dynamic>>> zoneTasksMap = {};
       taskCompletion = {};
       
       for (String zone in availableZones) {
         final zoneTasks = await HouseService.getZoneTasks(zone);
+        zoneTasksMap[zone] = zoneTasks;
+        
         // Get all completions for this zone
-        Map<String, bool> zoneCompletions = {};
-        for (int i = 0; i < (await HouseService.getZoneTasks(zone)).length; i++) {
-          zoneCompletions['$i'] = HouseService.getZoneTaskCompletion(zone, i);
-        }
-        
-        // Add zone info and color to each task
         for (int i = 0; i < zoneTasks.length; i++) {
-          final taskWithZone = Map<String, dynamic>.from(zoneTasks[i]);
-          taskWithZone['zone'] = zone;
-          taskWithZone['zoneColor'] = _getZoneColor(zone);
-          taskWithZone['zoneIndex'] = i; // Store original index
-          taskWithZone['taskKey'] = '${zone}_$i'; // Unique key for completion
-          allTasks.add(taskWithZone);
+          final isComplete = HouseService.getZoneTaskCompletion(zone, i);
+          taskCompletion['${zone}_$i'] = isComplete;
         }
-        
-        // Merge completions with zone-prefixed keys
-        zoneCompletions.forEach((key, value) {
-          taskCompletion['${zone}_$key'] = value;
-        });
       }
       
-      tasks = allTasks;
+      // Find the maximum number of tasks in any zone
+      int maxTasks = 0;
+      for (var zoneTasks in zoneTasksMap.values) {
+        if (zoneTasks.length > maxTasks) {
+          maxTasks = zoneTasks.length;
+        }
+      }
+      
+      // Interleave tasks: round-robin through zones
+      List<Map<String, dynamic>> interleavedTasks = [];
+      
+      for (int taskIndex = 0; taskIndex < maxTasks; taskIndex++) {
+        for (String zone in availableZones) {
+          final zoneTasks = zoneTasksMap[zone] ?? [];
+          if (taskIndex < zoneTasks.length) {
+            final taskWithZone = Map<String, dynamic>.from(zoneTasks[taskIndex]);
+            taskWithZone['zone'] = zone;
+            taskWithZone['zoneColor'] = _getZoneColor(zone);
+            taskWithZone['zoneIndex'] = taskIndex; // Store original index
+            taskWithZone['taskKey'] = '${zone}_$taskIndex'; // Unique key for completion
+            interleavedTasks.add(taskWithZone);
+          }
+        }
+      }
+      
+      tasks = interleavedTasks;
     } else {
       // Load single zone (original behavior)
       final zoneTasks = await HouseService.getZoneTasks(selectedZone);
@@ -86,6 +110,7 @@ class _ZoneScreenState extends State<ZoneScreen> {
       _isLoading = true;
     });
     await _loadTasks();
+    await _loadLastCleaned();
     setState(() {
       _isLoading = false;
     });
@@ -102,6 +127,17 @@ class _ZoneScreenState extends State<ZoneScreen> {
       'Reset',
     ];
     return !defaultZones.contains(zone);
+  }
+
+  String _friendlyDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(d).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    if (diff < 7) return '$diff days ago';
+    return DateFormat('MMM d').format(date);
   }
 
   Color _getZoneColor(String zone) {
@@ -188,57 +224,134 @@ class _ZoneScreenState extends State<ZoneScreen> {
           // Zone header with progress
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
               ),
             ),
-            child: Column(
+            child: Row(
               children: [
-                if (_isMixedMode) ...[
-                  const Icon(Icons.apps, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    'All Zones Mixed!',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ] else ...[
-                  Text(
-                    selectedZone,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  _isMixedMode 
-                    ? '$completedCount of $totalCount tasks completed across all zones'
-                    : '$completedCount of $totalCount tasks completed',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                // Circular progress indicator
+                SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 6,
+                        backgroundColor: Colors.white.withValues(alpha: 0.3),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          completedCount == totalCount && totalCount > 0
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '$completedCount',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            Text(
+                              'of $totalCount',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 12,
-                    backgroundColor: Colors.white.withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
-                    ),
+                const SizedBox(width: 16),
+                // Zone name & status
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_isMixedMode) ...[
+                        Row(
+                          children: [
+                            const Icon(Icons.apps, size: 20),
+                            const SizedBox(width: 6),
+                            Text(
+                              'All Zones Mixed',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tasks from every zone combined',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          selectedZone,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (completedCount == totalCount && totalCount > 0)
+                          Row(
+                            children: [
+                              const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                              const SizedBox(width: 4),
+                              Text(
+                                'All done! Great work 🎉',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Text(
+                            '$completedCount of $totalCount tasks done',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
+                            ),
+                          ),
+                        if (!_isMixedMode) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _lastCleaned == null
+                                ? 'Never cleaned yet'
+                                : 'Last cleaned: ${_friendlyDate(_lastCleaned!)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
                   ),
                 ),
               ],

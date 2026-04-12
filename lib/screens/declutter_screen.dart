@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../services/house_service.dart';
 import '../models/declutter_day.dart';
+import '../services/notification_service.dart';
 
 class DeclutterScreen extends StatefulWidget {
   const DeclutterScreen({super.key});
@@ -12,6 +13,65 @@ class DeclutterScreen extends StatefulWidget {
 }
 
 class _DeclutterScreenState extends State<DeclutterScreen> {
+  bool _celebrationShown = false;
+
+  Future<void> _toggleDay(int dayNumber) async {
+    await HouseService.toggleDeclutterDay(dayNumber);
+    setState(() {});
+
+    // Check if all 30 days are now complete
+    final progress = HouseService.getDeclutterProgress();
+    if (progress == 30 && !_celebrationShown && mounted) {
+      _celebrationShown = true;
+      await NotificationService.showNotification(
+        id: 50,
+        title: '🎉 Challenge Complete!',
+        body: 'You finished the 30-Day Declutter Challenge! Amazing work!',
+      );
+      _showCelebrationDialog();
+    }
+  }
+
+  void _showCelebrationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🎉', style: TextStyle(fontSize: 72)),
+            const SizedBox(height: 16),
+            Text(
+              'Challenge Complete!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'You finished all 30 days of the Declutter Challenge!\n\nYour home has never been more organised. You should be incredibly proud!',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text('🏆 ⭐ 🏆', style: TextStyle(fontSize: 32)),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton.icon(
+            icon: const Icon(Icons.celebration),
+            label: const Text('Amazing! Keep it up!'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allDays = HouseService.getAllDeclutterDays();
@@ -108,7 +168,9 @@ class _DeclutterScreenState extends State<DeclutterScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '${30 - progress} days remaining',
+                    progress == 30
+                        ? '🏆 Challenge Complete!'
+                        : '${30 - progress} days remaining',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -179,10 +241,7 @@ class _DeclutterScreenState extends State<DeclutterScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
-                            onPressed: () async {
-                              await HouseService.toggleDeclutterDay(currentDay.day);
-                              setState(() {});
-                            },
+                            onPressed: () => _toggleDay(currentDay.day),
                             icon: const Icon(Icons.check_circle),
                             label: const Text('Mark as Complete'),
                           ),
@@ -265,10 +324,7 @@ class _DeclutterScreenState extends State<DeclutterScreen> {
         ),
         trailing: Checkbox(
           value: day.isCompleted,
-          onChanged: (value) async {
-            await HouseService.toggleDeclutterDay(day.day);
-            setState(() {});
-          },
+          onChanged: (value) => _toggleDay(day.day),
         ),
       ),
     );

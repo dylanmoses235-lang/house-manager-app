@@ -3,12 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/house_service.dart';
 import 'services/notification_service.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/daily_tasks_screen.dart';
 import 'screens/zone_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/declutter_screen.dart';
 import 'screens/statistics_screen.dart';
-import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,7 +69,7 @@ class _HouseManagerAppState extends State<HouseManagerApp> {
         ),
         useMaterial3: true,
         cardTheme: CardThemeData(
-          elevation: 1,
+          elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -84,7 +82,7 @@ class _HouseManagerAppState extends State<HouseManagerApp> {
         ),
         useMaterial3: true,
         cardTheme: CardThemeData(
-          elevation: 1,
+          elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -119,7 +117,10 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget _getScreen(int index) {
     switch (index) {
       case 0:
-        return DashboardScreen(onNavigate: _navigateToTab);
+        return DashboardScreen(
+          onNavigate: _navigateToTab,
+          onThemeChanged: widget.onThemeChanged,
+        );
       case 1:
         return const ZoneScreen();
       case 2:
@@ -129,7 +130,10 @@ class _MainNavigationState extends State<MainNavigation> {
       case 4:
         return const StatisticsScreen();
       default:
-        return DashboardScreen(onNavigate: _navigateToTab);
+        return DashboardScreen(
+          onNavigate: _navigateToTab,
+          onThemeChanged: widget.onThemeChanged,
+        );
     }
   }
 
@@ -148,9 +152,9 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.check_circle_outline),
-            selectedIcon: Icon(Icons.check_circle),
-            label: 'Daily',
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
           ),
           NavigationDestination(
             icon: Icon(Icons.cleaning_services_outlined),
@@ -173,19 +177,6 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'Stats',
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SettingsScreen(
-                onThemeChanged: widget.onThemeChanged,
-              ),
-            ),
-          );
-        },
-        child: const Icon(Icons.settings),
       ),
     );
   }
