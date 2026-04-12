@@ -18,6 +18,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     'all': {'icon': Icons.list, 'label': 'All'},
     'cleaning': {'icon': Icons.cleaning_services, 'label': 'Cleaning'},
     'pantry': {'icon': Icons.kitchen, 'label': 'Pantry'},
+    'personal': {'icon': Icons.face, 'label': 'Personal Care'},
+    'bathroom': {'icon': Icons.bathroom, 'label': 'Bathroom'},
     'pet': {'icon': Icons.pets, 'label': 'Pet'},
     'other': {'icon': Icons.more_horiz, 'label': 'Other'},
   };

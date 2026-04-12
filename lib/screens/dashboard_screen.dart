@@ -5,11 +5,18 @@ import '../services/house_service.dart';
 import '../widgets/weekly_zone_plan_card.dart';
 import 'shopping_list_screen.dart';
 import 'calendar_screen.dart';
+import 'settings_screen.dart';
+import 'daily_tasks_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int) onNavigate;
+  final Function(ThemeMode) onThemeChanged;
   
-  const DashboardScreen({super.key, required this.onNavigate});
+  const DashboardScreen({
+    super.key,
+    required this.onNavigate,
+    required this.onThemeChanged,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -40,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final currentDeclutter = HouseService.getCurrentDeclutterDay();
     final declutterProgress = HouseService.getDeclutterProgress();
-    final startDate = HouseService.getChallengeStartDate();
     
     final now = DateTime.now();
     final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
@@ -69,6 +75,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => _showAboutDialog(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(
+                    onThemeChanged: widget.onThemeChanged,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -112,6 +132,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildInfoRow('Tomorrow\'s Zone', tomorrowZone),
                       const SizedBox(height: 8),
                       _buildInfoRow('Day Type', dayType),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Current Streak', '🔥 ${HouseService.getCurrentStreak()} days'),
                     ],
                   ),
                 ),
@@ -225,116 +247,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionCard(
-                      context,
-                      'Daily Tasks',
-                      _getDailyTasksPreview(),
-                      Icons.today,
-                      Colors.purple,
-                      () {
-                        widget.onNavigate(1); // Navigate to Daily Tasks tab
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionCard(
-                      context,
-                      'Zone Tasks',
-                      'Clean $todayZone',
-                      Icons.cleaning_services,
-                      Colors.blue,
-                      () {
-                        widget.onNavigate(2); // Navigate to Zone tab
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionCard(
-                      context,
-                      'Schedule',
-                      'View today\'s tasks',
-                      Icons.schedule,
-                      Colors.orange,
-                      () {
-                        widget.onNavigate(3); // Navigate to Schedule tab
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionCard(
-                      context,
-                      'Shopping List',
-                      'Manage supplies',
-                      Icons.shopping_cart,
-                      Colors.green,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ShoppingListScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionCard(
-                      context,
-                      'Statistics',
-                      'View your progress',
-                      Icons.analytics,
-                      Colors.purple,
-                      () {
-                        widget.onNavigate(5); // Navigate to Statistics tab
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
 
-              // Weekly Overview
-              const Text(
-                '📆 WEEKLY ZONE PLAN',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _buildWeekDayRow('Monday', 'Kitchen', now.weekday == 1),
-                      _buildWeekDayRow('Tuesday', 'Bathroom', now.weekday == 2),
-                      _buildWeekDayRow('Wednesday', 'Bedroom', now.weekday == 3),
-                      _buildWeekDayRow('Thursday', 'Living Room', now.weekday == 4),
-                      _buildWeekDayRow('Friday', 'Laundry Room', now.weekday == 5),
-                      _buildWeekDayRow('Saturday', 'Office', now.weekday == 6),
-                      _buildWeekDayRow('Sunday', 'Reset', now.weekday == 7),
-                    ],
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.4,
+                children: [
+                  _buildActionCard(
+                    context,
+                    'Daily Tasks',
+                    'Recurring daily chores',
+                    Icons.today,
+                    Colors.teal,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DailyTasksScreen(),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ),
+                  _buildActionCard(
+                    context,
+                    'Zone Tasks',
+                    'Clean $todayZone today',
+                    Icons.cleaning_services,
+                    Colors.blue,
+                    () => widget.onNavigate(1),
+                  ),
+                  _buildActionCard(
+                    context,
+                    'Schedule',
+                    'View today\'s schedule',
+                    Icons.schedule,
+                    Colors.orange,
+                    () => widget.onNavigate(2),
+                  ),
+                  _buildActionCard(
+                    context,
+                    'Shopping List',
+                    'Manage supplies',
+                    Icons.shopping_cart,
+                    Colors.green,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ShoppingListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildActionCard(
+                    context,
+                    'Statistics',
+                    'View your progress',
+                    Icons.analytics,
+                    Colors.indigo,
+                    () => widget.onNavigate(4),
+                  ),
+                  _buildActionCard(
+                    context,
+                    'Declutter',
+                    'Day $declutterProgress of 30',
+                    Icons.recycling,
+                    Colors.purple,
+                    () => widget.onNavigate(3),
+                  ),
+                ],
+              );
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -374,74 +360,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     VoidCallback onTap,
   ) {
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 40, color: color),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                textAlign: TextAlign.center,
+                child: Icon(icon, size: 22, color: color),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeekDayRow(String day, String zone, bool isToday) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: isToday ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3) : null,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                if (isToday) const Text('👉 ', style: TextStyle(fontSize: 16)),
-                Text(
-                  day,
-                  style: TextStyle(
-                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              zone,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -478,13 +437,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               SizedBox(height: 8),
-              Text('Monday: Kitchen (15 tasks)'),
-              Text('Tuesday: Bathroom (16 tasks)'),
+              Text('Monday: Kitchen (13 tasks)'),
+              Text('Tuesday: Bathroom (12 tasks)'),
               Text('Wednesday: Bedroom (15 tasks)'),
-              Text('Thursday: Living Room (15 tasks)'),
+              Text('Thursday: Living Room (16 tasks)'),
               Text('Friday: Laundry Room (11 tasks)'),
-              Text('Saturday: Office (12 tasks)'),
-              Text('Sunday: Weekly Reset (9 tasks)'),
+              Text('Saturday: Office (9 tasks)'),
+              Text('Sunday: Weekly Reset (10 tasks)'),
             ],
           ),
         ),
@@ -498,17 +457,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  String _getDailyTasksPreview() {
-    final urgentCount = HouseService.getUrgentDailyTaskCount();
-    final completedToday = HouseService.getDailyTasksCompletedToday();
-    final totalTasks = HouseService.getAllDailyRecurringTasks().length;
-    
-    if (completedToday == totalTasks) {
-      return 'All done today! 🎉';
-    } else if (urgentCount > 0) {
-      return '$urgentCount urgent tasks!';
-    } else {
-      return '$completedToday/$totalTasks done';
-    }
-  }
 }
